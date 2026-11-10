@@ -1,6 +1,6 @@
 """Screenshots of the Scan page (and console-error check) in headless Edge.
 
-    python ui-tests/shots.py [out_dir]     -> scan-empty-dark.png, scan-fail-dark.png, scan-fail-light.png, scan-disguised-dark.png, scan-base64-dark.png, scan-phone.png
+    python ui-tests/shots.py [out_dir]     -> scan-empty-dark.png, scan-fail-dark.png, scan-fail-light.png, scan-disguised-dark.png, scan-base64-dark.png, scan-base64-light.png, scan-base64-phone.png, scan-phone.png
 Exit 1 if the page logs a JavaScript error.
 """
 
@@ -57,10 +57,10 @@ def main() -> int:
                 # Copy as Markdown must not throw (regression guard: it builds the fix command lines).
                 page.click("button:has-text('Copy as Markdown')")
                 page.wait_for_timeout(200)
-                # Base64 payload (HB105): the decoded content is shown under the finding.
-                page.click('button[data-sample="base64"]')
-                page.wait_for_selector(".hidden-text")
-                page.screenshot(path=str(OUT / "scan-base64-dark.png"), full_page=True)
+            # Base64 payload (HB105): the decoded content is shown under the finding - both themes.
+            page.click('button[data-sample="base64"]')
+            page.wait_for_selector(".hidden-text")
+            page.screenshot(path=str(OUT / f"scan-base64-{theme}.png"), full_page=True)
             page.close()
         # Phone (390px): one-column stacking, the phone layout statement and a copyable fix command.
         phone = browser.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2, color_scheme="dark")
@@ -69,6 +69,13 @@ def main() -> int:
         phone.click('button[data-sample="hidden"]')
         phone.wait_for_selector("#scan-verdict")
         phone.screenshot(path=str(OUT / "scan-phone.png"), full_page=True)
+        # Base64 payload (HB105) on a phone (390x844), light theme: the decoded content stacks to one column.
+        b64_phone = browser.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2, color_scheme="light")
+        b64_phone.on("pageerror", lambda e: errors.append(str(e)))
+        b64_phone.goto(base + "#/scan")
+        b64_phone.click('button[data-sample="base64"]')
+        b64_phone.wait_for_selector(".hidden-text")
+        b64_phone.screenshot(path=str(OUT / "scan-base64-phone.png"), full_page=True)
         browser.close()
     server.shutdown()
     for e in errors:

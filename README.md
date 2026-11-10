@@ -17,7 +17,7 @@ under the finding, in the web app and in every CLI report format:
 
 ![Hexbane showing the decoded content of a base64 payload (HB105)](docs/screenshots/scan-base64-dark.png)
 
-Also in [light theme](docs/screenshots/scan-fail-light.png) and [on a phone](docs/screenshots/scan-phone.png).
+Also in [light theme](docs/screenshots/scan-base64-light.png) and [on a phone](docs/screenshots/scan-base64-phone.png).
 
 ## What it does
 

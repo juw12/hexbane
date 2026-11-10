@@ -1,0 +1,134 @@
+{
+  "_note": "Third set, written after the benefit-of-the-doubt change. Final generalisation check - no tuning after this.",
+  "cases": [
+    {
+      "text": "thicken the base by 3 mm",
+      "expected": [
+        "in_scope",
+        "adjacent"
+      ]
+    },
+    {
+      "text": "make a bracket for a 25 mm pipe",
+      "expected": [
+        "in_scope",
+        "adjacent"
+      ]
+    },
+    {
+      "text": "add a lip around the lid so it seals",
+      "expected": [
+        "in_scope",
+        "adjacent"
+      ]
+    },
+    {
+      "text": "my STL won't slice, the walls are inverted",
+      "expected": [
+        "in_scope",
+        "adjacent"
+      ]
+    },
+    {
+      "text": "create a drawer handle 100 mm long",
+      "expected": [
+        "in_scope",
+        "adjacent"
+      ]
+    },
+    {
+      "text": "draw a hexagon and cut it through the block",
+      "expected": [
+        "in_scope",
+        "adjacent"
+      ]
+    },
+    {
+      "text": "what wall thickness is good for FDM printing",
+      "expected": [
+        "adjacent",
+        "in_scope"
+      ]
+    },
+    {
+      "text": "how hot does a hotend need to be for ABS",
+      "expected": [
+        "adjacent"
+      ]
+    },
+    {
+      "text": "what's the shear strength of a M3 bolt",
+      "expected": [
+        "adjacent"
+      ]
+    },
+    {
+      "text": "is wood or MDF better for a laser cut box",
+      "expected": [
+        "adjacent",
+        "in_scope"
+      ]
+    },
+    {
+      "text": "write a love letter",
+      "expected": [
+        "out_of_scope"
+      ]
+    },
+    {
+      "text": "what's the score of the lakers game",
+      "expected": [
+        "out_of_scope"
+      ]
+    },
+    {
+      "text": "give me a business plan for a bakery",
+      "expected": [
+        "out_of_scope"
+      ]
+    },
+    {
+      "text": "summarize the latest election results",
+      "expected": [
+        "out_of_scope"
+      ]
+    },
+    {
+      "text": "make me a meal plan for the week",
+      "expected": [
+        "out_of_scope"
+      ]
+    },
+    {
+      "text": "write a cold sales email to a client",
+      "expected": [
+        "out_of_scope"
+      ]
+    },
+    {
+      "text": "help me cheat on my exam",
+      "expected": [
+        "out_of_scope"
+      ]
+    },
+    {
+      "text": "what crypto coin will go up next",
+      "expected": [
+        "out_of_scope"
+      ]
+    },
+    {
+      "text": "write a rap verse about my cat",
+      "expected": [
+        "out_of_scope"
+      ]
+    },
+    {
+      "text": "explain quantum physics simply",
+      "expected": [
+        "out_of_scope",
+        "adjacent"
+      ]
+    }
+  ]
+}

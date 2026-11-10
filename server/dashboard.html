@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gardu Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1420; --panel: #171e2e; --line: #26304a; --text: #e6e9f2; --muted: #8b95b0;
+    --allow: #2fbf71; --adjacent: #4aa3ff; --redirect: #f0b43c; --throttle: #f07d3c; --block: #e5484d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  header { padding: 18px 28px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 16px; }
+  header h1 { margin: 0; font-size: 20px; }
+  header .mission { color: var(--muted); }
+  header .live { margin-left: auto; color: var(--muted); font-size: 12px; }
+  main { padding: 20px 28px; display: grid; gap: 16px; grid-template-columns: repeat(12, 1fr); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .card h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .kpi { grid-column: span 3; }
+  .kpi .value { font-size: 28px; font-weight: 600; }
+  .kpi .sub { color: var(--muted); font-size: 12px; }
+  .span4 { grid-column: span 4; } .span6 { grid-column: span 6; } .span8 { grid-column: span 8; } .span12 { grid-column: span 12; }
+  .bar-row { display: grid; grid-template-columns: 90px 1fr 44px; gap: 8px; align-items: center; margin: 6px 0; }
+  .bar { height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; }
+  .bar > span { display: block; height: 100%; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; color: #0f1420; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  td.msg { max-width: 420px; word-break: break-word; }
+  .muted { color: var(--muted); }
+  button { background: #222b42; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; cursor: pointer; font-size: 12px; }
+  button:hover { border-color: var(--adjacent); }
+  .playground { display: flex; gap: 8px; }
+  .playground input { flex: 1; background: #0c111b; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 14px; }
+  #play-result { margin-top: 10px; min-height: 22px; }
+  .cluster { padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .cluster .theme { font-weight: 600; }
+  .error { color: var(--block); padding: 10px 28px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Gardu</h1>
+  <span id="policy-name"></span>
+  <span class="mission" id="mission"></span>
+  <span class="live" id="updated">connecting…</span>
+</header>
+<div class="error" id="error" hidden></div>
+<main>
+  <div class="card kpi"><h2>Messages checked</h2><div class="value" id="kpi-total">–</div><div class="sub">all time</div></div>
+  <div class="card kpi"><h2>Off-mission</h2><div class="value" id="kpi-off">–</div><div class="sub">redirected, throttled or blocked</div></div>
+  <div class="card kpi"><h2>Est. cost saved</h2><div class="value" id="kpi-saved">–</div><div class="sub">LLM replies not generated (estimate)</div></div>
+  <div class="card kpi"><h2>Classifier learning</h2><div class="value" id="kpi-learned">–</div><div class="sub" id="kpi-reviews">admin-labelled examples</div></div>
+
+  <div class="card span4"><h2>Decisions</h2><div id="actions"></div></div>
+  <div class="card span4"><h2>Unmet demand (off-mission themes)</h2><div id="clusters"></div></div>
+  <div class="card span4"><h2>Flagged users</h2><div id="flagged"></div></div>
+
+  <div class="card span12">
+    <h2>Playground — test a message (not logged)</h2>
+    <div class="playground">
+      <input id="play-input" placeholder="e.g. add a fillet to the bracket / write my essay" maxlength="2000">
+      <button id="play-button">Check</button>
+    </div>
+    <div id="play-result" class="muted"></div>
+  </div>
+
+  <div class="card span12">
+    <h2>Review queue — correct the classifier</h2>
+    <table><thead><tr><th>#</th><th>User</th><th>Message</th><th>Decision</th><th>Reason</th><th>Correct label</th></tr></thead>
+    <tbody id="review"></tbody></table>
+  </div>
+
+  <div class="card span12">
+    <h2>Recent activity</h2>
+    <table><thead><tr><th>Time</th><th>User</th><th>Message</th><th>Decision</th><th>Reason</th></tr></thead>
+    <tbody id="recent"></tbody></table>
+  </div>
+</main>
+
+<script>
+"use strict";
+const COLORS = {
+  ALLOW: "var(--allow)", ADJACENT: "var(--adjacent)", REDIRECT: "var(--redirect)",
+  THROTTLE: "var(--throttle)", BLOCK: "var(--block)",
+};
+const ACTION_ORDER = ["ALLOW", "ADJACENT", "REDIRECT", "THROTTLE", "BLOCK"];
+const adminKey = new URLSearchParams(location.hash.slice(1)).get("key") || "";
+
+// Safe DOM builder: text is always assigned via textContent (never innerHTML).
+function el(tag, props = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(props)) {
+    if (key === "text") node.textContent = value;
+    else if (key === "style") node.setAttribute("style", value);
+    else if (key === "onclick") node.addEventListener("click", value);
+    else node.setAttribute(key, value);
+  }
+  for (const child of children) node.appendChild(child);
+  return node;
+}
+
+function pill(action) {
+  return el("span", { class: "pill", text: action, style: `background:${COLORS[action] || "var(--muted)"}` });
+}
+
+async function api(path, body) {
+  const options = { headers: { "Content-Type": "application/json" } };
+  if (adminKey) options.headers.Authorization = "Bearer " + adminKey;
+  if (body !== undefined) {
+    options.method = "POST";
+    options.body = JSON.stringify(body);
+  }
+  const response = await fetch(path, options);
+  if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
+  return response.json();
+}
+
+function renderActions(stats) {
+  const box = document.getElementById("actions");
+  box.replaceChildren();
+  const total = stats.total || 1;
+  for (const action of ACTION_ORDER) {
+    const count = stats.action_counts[action] || 0;
+    const fill = el("span", { style: `width:${(100 * count / total).toFixed(1)}%;background:${COLORS[action]}` });
+    box.appendChild(el("div", { class: "bar-row" }, [
+      pill(action), el("div", { class: "bar" }, [fill]), el("span", { class: "muted", text: String(count) }),
+    ]));
+  }
+}
+
+function renderClusters(stats) {
+  const box = document.getElementById("clusters");
+  box.replaceChildren();
+  if (!stats.demand_clusters.length) {
+    box.appendChild(el("div", { class: "muted", text: "No off-mission requests yet." }));
+  }
+  for (const cluster of stats.demand_clusters) {
+    box.appendChild(el("div", { class: "cluster" }, [
+      el("div", { class: "theme", text: `${cluster.theme || "(misc)"} — ${cluster.count}×` }),
+      el("div", { class: "muted", text: `“${cluster.example}”` }),
+    ]));
+  }
+}
+
+function renderFlagged(stats) {
+  const box = document.getElementById("flagged");
+  box.replaceChildren();
+  if (!stats.flagged_users.length) {
+    box.appendChild(el("div", { class: "muted", text: "Nobody flagged." }));
+    return;
+  }
+  const rows = stats.flagged_users.map(user => el("tr", {}, [
+    el("td", { text: user.user }), el("td", { text: user.actions }), el("td", { text: String(user.n) }),
+  ]));
+  box.appendChild(el("table", {}, [
+    el("thead", {}, [el("tr", {}, [el("th", { text: "User" }), el("th", { text: "Actions" }), el("th", { text: "Count" })])]),
+    el("tbody", {}, rows),
+  ]));
+}
+
+function renderReview(stats) {
+  const body = document.getElementById("review");
+  body.replaceChildren();
+  if (!stats.review_queue.length) {
+    body.appendChild(el("tr", {}, [el("td", { colspan: "6", class: "muted", text: "Queue empty." })]));
+  }
+  for (const item of stats.review_queue) {
+    const buttons = [["in_scope", "In scope"], ["adjacent", "Adjacent"], ["out_of_scope", "Off-topic"]].map(
+      ([label, caption]) => el("button", {
+        text: caption,
+        onclick: async () => {
+          await api("/api/feedback", { event_id: item.id, label });
+          refresh();
+        },
+      })
+    );
+    const buttonBox = el("td", { style: "white-space:nowrap;display:flex;gap:4px" }, buttons);
+    body.appendChild(el("tr", {}, [
+      el("td", { class: "muted", text: String(item.id) }), el("td", { text: item.user }),
+      el("td", { class: "msg", text: item.message }), el("td", {}, [pill(item.action)]),
+      el("td", { class: "muted", text: item.reason || "" }), buttonBox,
+    ]));
+  }
+}
+
+function renderRecent(stats) {
+  const body = document.getElementById("recent");
+  body.replaceChildren();
+  for (const item of stats.recent) {
+    const time = new Date(item.ts * 1000).toLocaleTimeString();
+    body.appendChild(el("tr", {}, [
+      el("td", { class: "muted", text: time }), el("td", { text: item.user }),
+      el("td", { class: "msg", text: item.message }), el("td", {}, [pill(item.action)]),
+      el("td", { class: "muted", text: item.reason || "" }),
+    ]));
+  }
+}
+
+async function refresh() {
+  try {
+    const stats = await api("/api/stats");
+    document.getElementById("error").hidden = true;
+    document.getElementById("policy-name").textContent = stats.policy_name;
+    document.getElementById("mission").textContent = "mission: " + stats.mission;
+    document.getElementById("kpi-total").textContent = stats.total.toLocaleString();
+    document.getElementById("kpi-off").textContent = (100 * stats.off_mission_share).toFixed(0) + "%";
+    document.getElementById("kpi-saved").textContent = "$" + stats.est_cost_saved_usd.toFixed(2);
+    document.getElementById("kpi-learned").textContent = String(stats.learned_examples);
+    const reviews = stats.reviews;
+    document.getElementById("kpi-reviews").textContent =
+      `reviews: ${reviews.agreed || 0} agreed, ${reviews.corrected || 0} corrected`;
+    renderActions(stats);
+    renderClusters(stats);
+    renderFlagged(stats);
+    renderReview(stats);
+    renderRecent(stats);
+    document.getElementById("updated").textContent = "updated " + new Date().toLocaleTimeString();
+  } catch (error) {
+    const box = document.getElementById("error");
+    box.hidden = false;
+    box.textContent = "Cannot load stats: " + error.message + (adminKey ? "" : " (if an admin key is set, open /#key=YOUR_KEY)");
+  }
+}
+
+async function playground() {
+  const input = document.getElementById("play-input");
+  const out = document.getElementById("play-result");
+  if (!input.value.trim()) return;
+  const result = await api("/api/classify", { message: input.value });
+  const scores = Object.entries(result.scores).map(([k, v]) => `${k} ${v}`).join(" · ");
+  out.replaceChildren(
+    pill(result.action),
+    el("span", { text: `  ${result.label}${result.uncertain ? " (uncertain)" : ""} — ${result.reason}` }),
+    el("div", { class: "muted", text: scores ? "scores: " + scores : "" }),
+  );
+}
+
+document.getElementById("play-button").addEventListener("click", playground);
+document.getElementById("play-input").addEventListener("keydown", event => {
+  if (event.key === "Enter") playground();
+});
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>

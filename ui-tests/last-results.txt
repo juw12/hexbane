@@ -1,0 +1,12 @@
+11/11 passed - 2026-11-10 09:40 - headless Microsoft Edge
+PASS  parity: classify  202 messages x 3 templates' engines agree (labels, uncertainty, scores)
+PASS  parity: sessions  65 sequential decisions agree (allowance, throttle, drift, cost)
+PASS  parity: learning & clustering  learned examples + 4 demand clusters identical
+PASS  ui: chat & explanation  allow / redirect / block / name-not-jailbreak / chips / explain
+PASS  ui: allowance & throttle  3 courtesy redirects, then throttle; per user
+PASS  security: XSS payload  payload rendered as text in chat, dashboard and themes
+PASS  ui: dashboard & learning  19 messages, themes, flagged users, review -> learned, persisted
+PASS  ui: policy edit/import  switch, edit+save, persist, validation, reset, import good/bad
+PASS  ui: accuracy page  final set 85% matches the Python measurement; custom cases parse
+PASS  ui: theme & mobile  light/dark persisted; no horizontal overflow on a 390 px phone
+PASS  no console errors

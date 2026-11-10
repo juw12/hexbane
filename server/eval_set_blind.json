@@ -1,0 +1,35 @@
+{
+  "_note": "Blind set written AFTER tuning. Do not tune against this file; it measures generalisation.",
+  "cases": [
+    {"text": "round off the corners of the base plate", "expected": ["in_scope"]},
+    {"text": "I need a cable clip for my desk, 6 mm cable", "expected": ["in_scope"]},
+    {"text": "split the body into two halves", "expected": ["in_scope"]},
+    {"text": "add ribs to stiffen the enclosure", "expected": ["in_scope"]},
+    {"text": "my print has warped corners, change the model so it prints flat", "expected": ["in_scope", "adjacent"]},
+    {"text": "dimension the slot width to 12 mm", "expected": ["in_scope"]},
+    {"text": "create a sheet metal box with flanges", "expected": ["in_scope"]},
+    {"text": "import an SVG logo and emboss it on the lid", "expected": ["in_scope"]},
+    {"text": "reduce the polygon count of this mesh", "expected": ["in_scope"]},
+    {"text": "design a knob that fits a 6 mm D shaft", "expected": ["in_scope"]},
+
+    {"text": "is titanium worth it for a drone frame", "expected": ["adjacent"]},
+    {"text": "what's the melting point of PETG", "expected": ["adjacent"]},
+    {"text": "what clearance do I need for an M4 screw", "expected": ["adjacent", "in_scope"]},
+    {"text": "how does anodizing work", "expected": ["adjacent"]},
+    {"text": "which is stiffer, carbon fiber or aluminium", "expected": ["adjacent"]},
+    {"text": "how much does laser cutting cost", "expected": ["adjacent"]},
+
+    {"text": "write a speech for my best friend's birthday", "expected": ["out_of_scope"]},
+    {"text": "what's the best pizza place nearby", "expected": ["out_of_scope"]},
+    {"text": "explain the plot of game of thrones", "expected": ["out_of_scope"]},
+    {"text": "do my english assignment", "expected": ["out_of_scope"]},
+    {"text": "how do I invest in gold", "expected": ["out_of_scope"]},
+    {"text": "write a tweet about my new cafe", "expected": ["out_of_scope"]},
+    {"text": "what year did the titanic sink", "expected": ["out_of_scope"]},
+    {"text": "generate a SQL query for my sales database", "expected": ["out_of_scope"]},
+    {"text": "give me tips for a job interview", "expected": ["out_of_scope"]},
+    {"text": "what's the best smartphone to buy", "expected": ["out_of_scope"]},
+    {"text": "model the economy of germany in a spreadsheet", "expected": ["out_of_scope"]},
+    {"text": "who should I vote for", "expected": ["out_of_scope"]}
+  ]
+}

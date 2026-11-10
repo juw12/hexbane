@@ -1,0 +1,122 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.3,
+    "C2": 0.25,
+    "C3": 0.15,
+    "C4": 0.15,
+    "C5": 0.15
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 4.0,
+        "C2": 6.0,
+        "C3": 7.0,
+        "C4": 10.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Local classifier matches wording, not meaning (TF-IDF + kNN); no MCP/tool scanning.",
+        "C2": "Browser demo exists, but no code scan CLI or SARIF output.",
+        "C3": "One brand and story, but missing the scanner half of the 'stay in scope' model.",
+        "C4": "Limits stated plainly ('1 in 5... get through'), tuning vs held-out sets separated.",
+        "C5": "Clean hierarchy and PWA support; contrast not verified."
+      },
+      "fixes": [
+        "Implement the install-free static scanner for MCP servers and tools (Core Gardu goal missing).",
+        "Add runtime tool-call gating and rug-pull detection to reach Security Depth level 10.",
+        "Integrate SARIF output and GitHub Action for CI-ready usability."
+      ],
+      "total": 6.6,
+      "seconds": 59.5
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 1.0,
+        "C2": 2.0,
+        "C3": 2.0,
+        "C4": 6.0,
+        "C5": 5.0
+      },
+      "evidence": {
+        "C1": "Artifact is a chatbot message classifier (ALLOW/ADJACENT/REDIRECT/THROTTLE/BLOCK), not a scanner for AI agent skills, MCP servers, or tools. No coverage of tool poisoning, hidden Unicode, cross-tool shadowing, exfiltration, remote-code pipes, or risky MCP config.",
+        "C2": "Has a browser demo and Python server, but no security-scanning CLI, no SARIF output, no GitHub Action, no folder-drop for skills/MCP. Verdicts are ALLOW/ADJACENT/REDIRECT/THROTTLE/BLOCK, not the required PASS/REVIEW/FAIL.",
+        "C3": "Only the runtime-guard half of the described product exists; the scanner half is entirely absent. 'Stay in scope' is applied only to chat messages, not to skills/tools as the rubric requires.",
+        "C4": "Measured numbers with tuning/blind/final set separation (100%/89%/85%), limits stated plainly ('working prototype', 'not audited', '~1 in 5 cleverly phrased off-topic requests get through'). Missing public-set evaluation, false-alarm enumeration, and source links.",
+        "C5": "Screenshot shows clean dark theme with clear hierarchy and severity colors (REDIRECT yellow, BLOCK red). Looks professional but generic; no evidence of phone responsiveness or contrast verification."
+      },
+      "fixes": [
+        "Build the actual security scanner for AI agent skills, MCP servers, and tools — the core product described in the rubric is entirely missing.",
+        "Add detection and explanations for the named attack classes: tool poisoning, hidden Unicode, cross-tool shadowing, exfiltration, remote-code pipes, and risky MCP config, with decoded hidden payloads shown to the user.",
+        "Add CI-ready outputs (SARIF), a GitHub Action, and a zero-install browser scan with folder drop and sample skills, so developers can actually run the check in their workflow."
+      ],
+      "total": 2.75,
+      "seconds": 13.2
+    },
+    "GLM-5.3-Flash": {
+      "error": "TimeoutError: The read operation timed out",
+      "raw": "",
+      "seconds": 548.4
+    }
+  },
+  "quorum": 2,
+  "council_score": 4.67,
+  "criterion_median": {
+    "C1": 2.5,
+    "C2": 4.0,
+    "C3": 4.5,
+    "C4": 8.0,
+    "C5": 7.0
+  },
+  "criterion_spread": {
+    "C1": 3.0,
+    "C2": 4.0,
+    "C3": 5.0,
+    "C4": 4.0,
+    "C5": 4.0
+  },
+  "split_criteria": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5"
+  ],
+  "judge_total_range": [
+    2.75,
+    6.6
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Implement the install-free static scanner for MCP servers and tools (Core Gardu goal missing)."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Add runtime tool-call gating and rug-pull detection to reach Security Depth level 10."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Integrate SARIF output and GitHub Action for CI-ready usability."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Build the actual security scanner for AI agent skills, MCP servers, and tools — the core product described in the rubric is entirely missing."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Add detection and explanations for the named attack classes: tool poisoning, hidden Unicode, cross-tool shadowing, exfiltration, remote-code pipes, and risky MCP config, with decoded hidden payloads shown to the user."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Add CI-ready outputs (SARIF), a GitHub Action, and a zero-install browser scan with folder drop and sample skills, so developers can actually run the check in their workflow."
+    }
+  ],
+  "label": "council-judged (2 judges)"
+}

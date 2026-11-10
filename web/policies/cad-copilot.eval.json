@@ -1,0 +1,555 @@
+{
+  "policy": "cad-copilot",
+  "sets": [
+    {
+      "id": "eval_set",
+      "title": "Tuning set (optimistic)",
+      "cases": [
+        {
+          "text": "Can you add holes to the corners of this plate",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "Make the walls of the case thicker",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "Export my model to STEP",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "design a phone stand I can 3D print",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "fillet the sharp edges",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "Create a cylinder 40 mm diameter and 60 mm tall",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "my mesh has holes, can you repair it",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "make the sketch fully constrained",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "put a countersink on the screw holes",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "build a parametric shelf bracket",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "design a PCB footprint for this connector",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "Model a wall hook that holds 5 kg",
+          "expected": [
+            "in_scope",
+            "adjacent"
+          ]
+        },
+        {
+          "text": "increase the hole diameter to 8 mm",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "generate gcode for my printer",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "Is aluminium or steel better for a bike frame",
+          "expected": [
+            "adjacent"
+          ]
+        },
+        {
+          "text": "what's the tensile strength of nylon",
+          "expected": [
+            "adjacent"
+          ]
+        },
+        {
+          "text": "how thick should a plastic wall be for injection molding",
+          "expected": [
+            "adjacent",
+            "in_scope"
+          ]
+        },
+        {
+          "text": "how many newtons is 10 kg",
+          "expected": [
+            "adjacent"
+          ]
+        },
+        {
+          "text": "what is the price of brass per kg",
+          "expected": [
+            "adjacent"
+          ]
+        },
+        {
+          "text": "which bolt grade is strongest",
+          "expected": [
+            "adjacent"
+          ]
+        },
+        {
+          "text": "Cost of steel stocks today",
+          "expected": [
+            "adjacent",
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "what milling cutter should I use for aluminium",
+          "expected": [
+            "adjacent",
+            "in_scope"
+          ]
+        },
+        {
+          "text": "Write my history essay about the french revolution",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "Give me a recipe for lasagna",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "Who is the best basketball player ever",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "Write a breakup text",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "What's the tesla share price",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "Should I buy shares in a steel company",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "Translate hello into french",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "Help me write a resume",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "Write a javascript todo app",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "What movies are out this weekend",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "print my essay in a nicer font",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "tell me a bedtime story about dragons",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "how do I fix my car engine",
+          "expected": [
+            "out_of_scope",
+            "adjacent"
+          ]
+        },
+        {
+          "text": "plan my wedding",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "what's a good name for my dog",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "solve this calculus integral for my homework",
+          "expected": [
+            "out_of_scope"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eval_set_blind",
+      "title": "Blind set",
+      "cases": [
+        {
+          "text": "round off the corners of the base plate",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "I need a cable clip for my desk, 6 mm cable",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "split the body into two halves",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "add ribs to stiffen the enclosure",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "my print has warped corners, change the model so it prints flat",
+          "expected": [
+            "in_scope",
+            "adjacent"
+          ]
+        },
+        {
+          "text": "dimension the slot width to 12 mm",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "create a sheet metal box with flanges",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "import an SVG logo and emboss it on the lid",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "reduce the polygon count of this mesh",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "design a knob that fits a 6 mm D shaft",
+          "expected": [
+            "in_scope"
+          ]
+        },
+        {
+          "text": "is titanium worth it for a drone frame",
+          "expected": [
+            "adjacent"
+          ]
+        },
+        {
+          "text": "what's the melting point of PETG",
+          "expected": [
+            "adjacent"
+          ]
+        },
+        {
+          "text": "what clearance do I need for an M4 screw",
+          "expected": [
+            "adjacent",
+            "in_scope"
+          ]
+        },
+        {
+          "text": "how does anodizing work",
+          "expected": [
+            "adjacent"
+          ]
+        },
+        {
+          "text": "which is stiffer, carbon fiber or aluminium",
+          "expected": [
+            "adjacent"
+          ]
+        },
+        {
+          "text": "how much does laser cutting cost",
+          "expected": [
+            "adjacent"
+          ]
+        },
+        {
+          "text": "write a speech for my best friend's birthday",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "what's the best pizza place nearby",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "explain the plot of game of thrones",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "do my english assignment",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "how do I invest in gold",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "write a tweet about my new cafe",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "what year did the titanic sink",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "generate a SQL query for my sales database",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "give me tips for a job interview",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "what's the best smartphone to buy",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "model the economy of germany in a spreadsheet",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "who should I vote for",
+          "expected": [
+            "out_of_scope"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eval_set_final",
+      "title": "Final set (never tuned against)",
+      "cases": [
+        {
+          "text": "thicken the base by 3 mm",
+          "expected": [
+            "in_scope",
+            "adjacent"
+          ]
+        },
+        {
+          "text": "make a bracket for a 25 mm pipe",
+          "expected": [
+            "in_scope",
+            "adjacent"
+          ]
+        },
+        {
+          "text": "add a lip around the lid so it seals",
+          "expected": [
+            "in_scope",
+            "adjacent"
+          ]
+        },
+        {
+          "text": "my STL won't slice, the walls are inverted",
+          "expected": [
+            "in_scope",
+            "adjacent"
+          ]
+        },
+        {
+          "text": "create a drawer handle 100 mm long",
+          "expected": [
+            "in_scope",
+            "adjacent"
+          ]
+        },
+        {
+          "text": "draw a hexagon and cut it through the block",
+          "expected": [
+            "in_scope",
+            "adjacent"
+          ]
+        },
+        {
+          "text": "what wall thickness is good for FDM printing",
+          "expected": [
+            "adjacent",
+            "in_scope"
+          ]
+        },
+        {
+          "text": "how hot does a hotend need to be for ABS",
+          "expected": [
+            "adjacent"
+          ]
+        },
+        {
+          "text": "what's the shear strength of a M3 bolt",
+          "expected": [
+            "adjacent"
+          ]
+        },
+        {
+          "text": "is wood or MDF better for a laser cut box",
+          "expected": [
+            "adjacent",
+            "in_scope"
+          ]
+        },
+        {
+          "text": "write a love letter",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "what's the score of the lakers game",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "give me a business plan for a bakery",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "summarize the latest election results",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "make me a meal plan for the week",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "write a cold sales email to a client",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "help me cheat on my exam",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "what crypto coin will go up next",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "write a rap verse about my cat",
+          "expected": [
+            "out_of_scope"
+          ]
+        },
+        {
+          "text": "explain quantum physics simply",
+          "expected": [
+            "out_of_scope",
+            "adjacent"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Hermetic suites (scanner, web app, server)
+        run: python tests/run_all.py
+      - name: Evaluation numbers
+        run: python tests/evaluate.py
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install playwright && python -m playwright install --with-deps chromium
+      - name: Browser scanner equals Python scanner
+        run: python ui-tests/parity.py
+        env:
+          GARDU_BROWSER: chromium
+      - name: Scan page renders without JavaScript errors
+        run: python ui-tests/shots.py /tmp/shots
+        env:
+          GARDU_BROWSER: chromium
+
+  self-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./
+        with:
+          path: .
+          fail-on: high

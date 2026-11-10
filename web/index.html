@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Gardu checks AI agent skills, MCP servers and tool output for prompt injection, hidden text, leaked secrets and risky commands, and keeps business assistants on their mission.">
+<meta name="theme-color" content="#0f1420">
+<meta name="color-scheme" content="dark light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gardu">
+<title>Gardu: check AI agent skills and MCP servers before you trust them</title>
+<script>
+  // Apply the saved theme before first paint so the page never flashes the wrong colours.
+  (function () {
+    var saved = {};
+    try {
+      saved = JSON.parse(localStorage.getItem("scopeguard-settings-v1") || "{}");
+    } catch (error) {
+      saved = {};
+    }
+    var theme = saved.theme || "system";
+    if (theme === "system") {
+      theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    }
+    document.documentElement.dataset.theme = theme;
+  })();
+</script>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <h1 class="brand-title"><a class="brand" href="#/scan" aria-label="Gardu home">
+    <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 10.5 12 4l9 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 10v9.5h13V10" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 19.5v-5h4v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+    <span class="brand-name">Gardu</span>
+  </a></h1>
+  <nav class="tabs" aria-label="Sections">
+    <a href="#/scan" data-route="scan">Scan</a>
+    <a href="#/try" data-route="try">Chat gate</a>
+    <a href="#/dashboard" data-route="dashboard">Dashboard</a>
+    <a href="#/policy" data-route="policy">Policy</a>
+    <a href="#/accuracy" data-route="accuracy">Accuracy</a>
+    <a href="#/integrate" data-route="integrate">Integrate</a>
+  </nav>
+  <div class="topbar-tools">
+    <label class="select-label">
+      <span class="visually-hidden">Assistant policy</span>
+      <select id="policy-select" title="Which business assistant to guard"></select>
+    </label>
+    <label class="select-label">
+      <span class="visually-hidden">Theme</span>
+      <select id="theme-select" title="Theme">
+        <option value="system">System</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </label>
+  </div>
+</header>
+<p class="mission-bar" id="mission-bar"></p>
+<main id="view" tabindex="-1"></main>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<footer class="footer">
+  Scans and chats run in your browser; nothing is uploaded. Gardu matches known patterns, so PASS means "nothing known-bad found", not "safe".
+  <a href="https://github.com/juw12/gardu" rel="noopener">Source, CLI, GitHub Action and self-hosted server</a>
+</footer>
+<script src="engine.js"></script>
+<script src="scan.js"></script>
+<script src="scanview.js"></script>
+<script src="store.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

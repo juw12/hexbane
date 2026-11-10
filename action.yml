@@ -1,0 +1,60 @@
+name: Gardu scan
+description: Check AI agent skills, MCP configs and tool manifests for prompt injection, hidden text, secrets and risky commands.
+author: juw12
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  path:
+    description: Folder or file to scan.
+    default: "."
+  fail-on:
+    description: Fail the job at this severity or above (low, medium, high, critical, never).
+    default: high
+  upload-sarif:
+    description: Upload results to GitHub code scanning (needs security-events write permission).
+    default: "true"
+  sarif-file:
+    description: Where to write the SARIF report.
+    default: gardu.sarif
+
+outputs:
+  sarif-file:
+    description: Path of the SARIF report.
+    value: ${{ inputs.sarif-file }}
+  exit-code:
+    description: 0 when nothing at or above fail-on was found, 1 otherwise.
+    value: ${{ steps.scan.outputs.exit-code }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - id: scan
+      shell: bash
+      env:
+        GARDU_PATH: ${{ inputs.path }}
+        GARDU_FAIL_ON: ${{ inputs.fail-on }}
+        GARDU_SARIF: ${{ inputs.sarif-file }}
+      run: |
+        set +e
+        PYTHONPATH="${{ github.action_path }}" python -m gardu scan "$GARDU_PATH" --fail-on "$GARDU_FAIL_ON"
+        code=$?
+        PYTHONPATH="${{ github.action_path }}" python -m gardu scan "$GARDU_PATH" --format sarif --out "$GARDU_SARIF" --fail-on never
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+
+    - if: ${{ inputs.upload-sarif == 'true' }}
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.sarif-file }}
+        category: gardu
+
+    - if: ${{ steps.scan.outputs.exit-code != '0' }}
+      shell: bash
+      run: |
+        echo "Gardu found issues at or above '${{ inputs.fail-on }}'. See the log above or the Security tab."
+        exit 1

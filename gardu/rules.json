@@ -1,0 +1,701 @@
+{
+  "version": "0.1.0",
+  "invisible": [
+    8203,
+    8204,
+    8205,
+    8288,
+    8289,
+    8290,
+    8291,
+    8292,
+    6158,
+    65279
+  ],
+  "bidi": [
+    8234,
+    8235,
+    8236,
+    8237,
+    8238,
+    8294,
+    8295,
+    8296,
+    8297
+  ],
+  "placeholder_words": [
+    "your",
+    "xxx",
+    "example",
+    "changeme",
+    "placeholder",
+    "dummy",
+    "redacted",
+    "<",
+    "${",
+    "process.env",
+    "os.environ",
+    "getenv",
+    "env.",
+    "secrets.",
+    "****",
+    "...",
+    "none",
+    "null",
+    "undefined",
+    "string",
+    "required",
+    "optional",
+    "true",
+    "false",
+    "self.",
+    "this.",
+    "config.",
+    "args.",
+    "params.",
+    "input",
+    "prompt",
+    "settings."
+  ],
+  "side_channel_params": [
+    "sidenote",
+    "side_note",
+    "note",
+    "notes",
+    "context",
+    "metadata",
+    "extra",
+    "debug",
+    "feedback",
+    "reasoning",
+    "comment",
+    "remarks",
+    "aux",
+    "internal"
+  ],
+  "side_channel_words": "\\b(content|contents|file|conversation|history|system\\s+prompt|password|key|token|config|mcp\\.json|ssh|previous\\s+messages)\\b",
+  "comment_ai_words": "\\b(you|assistant|agent|ai|model|claude|llm|gpt|copilot)\\b",
+  "comment_order_words": "\\b(must|should|always|never|do\\s+not|don't|ignore|instead|make\\s+sure|remember\\s+to)\\b",
+  "rules": [
+    {
+      "id": "GD101",
+      "severity": "high",
+      "category": "hidden",
+      "title": "Invisible characters",
+      "why": "Zero-width characters hide words from a human reviewer while the model still reads them. They are used to split trigger words past filters or to smuggle instructions.",
+      "fix": "Delete the invisible characters (the evidence shows where they are) and re-review the text.",
+      "refs": [
+        "https://embracethered.com/blog/posts/2024/hiding-and-finding-text-with-unicode-tags/"
+      ]
+    },
+    {
+      "id": "GD102",
+      "severity": "high",
+      "category": "hidden",
+      "title": "Bidirectional control characters",
+      "why": "Right-to-left override characters make text display in a different order than it is read by tools and models (the 'Trojan Source' trick).",
+      "fix": "Remove the bidi control characters unless the file is genuinely right-to-left prose.",
+      "refs": [
+        "https://trojansource.codes/"
+      ]
+    },
+    {
+      "id": "GD103",
+      "severity": "critical",
+      "category": "hidden",
+      "title": "Hidden Unicode tag text (ASCII smuggling)",
+      "why": "Unicode tag characters are invisible in every editor and browser, but many models decode them as normal text. This is a known way to hide instructions inside a skill or tool description.",
+      "fix": "Remove the tag characters. Gardu shows the decoded hidden text so you can see what it said.",
+      "refs": [
+        "https://embracethered.com/blog/posts/2024/hiding-and-finding-text-with-unicode-tags/"
+      ]
+    },
+    {
+      "id": "GD104",
+      "severity": "high",
+      "category": "hidden",
+      "title": "Instructions hidden in an HTML comment",
+      "why": "HTML comments do not show when Markdown is rendered, so a reviewer reading the page never sees them, but the agent reads the raw file.",
+      "fix": "Move any real instructions into visible text, or delete the comment.",
+      "refs": [
+        "https://genai.owasp.org/llmrisk/llm01-prompt-injection/"
+      ]
+    },
+    {
+      "id": "GD105",
+      "severity": "medium",
+      "category": "hidden",
+      "title": "Encoded text blob",
+      "why": "A long base64 string that decodes to readable text is a common way to hide a payload from reviewers and keyword filters.",
+      "fix": "Replace the blob with the plain text it encodes, or explain in a visible comment why it must be encoded.",
+      "refs": [
+        "https://genai.owasp.org/llmrisk/llm01-prompt-injection/"
+      ]
+    },
+    {
+      "id": "GD201",
+      "severity": "high",
+      "category": "injection",
+      "title": "Tries to override the agent's instructions",
+      "why": "Text that tells the model to ignore or replace its earlier instructions is the classic prompt-injection pattern. A skill or tool never needs it.",
+      "fix": "Remove the sentence. If you are documenting attacks, quote it in a code block and add a gardu-ignore comment.",
+      "refs": [
+        "https://genai.owasp.org/llmrisk/llm01-prompt-injection/"
+      ],
+      "patterns": [
+        "\\b(ignore|disregard|forget|override)\\b[^.\\n]{0,40}\\b(previous|prior|above|earlier|preceding|all|any|your|system)\\b[^.\\n]{0,24}\\b(instructions?|rules|prompts?|guidelines|directives)\\b",
+        "\\bnew\\s+(system\\s+)?(instructions|prompt)\\s*:",
+        "\\byou\\s+are\\s+now\\s+(in\\s+)?(developer|dan|jailbreak|god|unrestricted)\\s+mode\\b"
+      ]
+    },
+    {
+      "id": "GD202",
+      "severity": "high",
+      "category": "injection",
+      "title": "Tells the agent to hide something from the user",
+      "why": "Legitimate tools have no reason to keep actions secret from the person using them. Concealment wording is the strongest single sign of a poisoned tool or skill.",
+      "fix": "Remove the concealment wording; anything the tool does should be visible to the user.",
+      "refs": [
+        "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks",
+        "https://genai.owasp.org/llmrisk/llm01-prompt-injection/"
+      ],
+      "patterns": [
+        "\\b(do\\s+not|don't|dont|never|must\\s+not)\\s+(tell|inform|mention|reveal|show|notify|alert|disclose)\\s+(this|it|that|anything|any\\s+of\\s+this|about\\s+(this|it|that))\\b[^.\\n]{0,30}\\b(user|human|operator)\\b",
+        "\\b(do\\s+not|don't|dont|never)\\s+(tell|inform|notify|alert|warn)\\s+(the\\s+)?(user|human|operator)\\s+(about|of)\\s+(this|it|that|the\\s+change)\\b",
+        "\\b(don't|do\\s+not|dont|never)\\s+(notify|alert)\\s+the\\s+user\\b",
+        "\\bwithout\\s+(telling|informing|notifying|alerting)\\s+(the\\s+)?(user|human)\\b",
+        "\\b(the\\s+)?user\\s+(must|should)\\s+not\\s+(know|see|notice|be\\s+told)\\b",
+        "\\b(keep|stay)\\s+(this|it)\\s+(secret|hidden|confidential)\\s+from\\b",
+        "\\b(secretly|covertly|silently)\\s+(send|upload|forward|copy|exfiltrate|read|collect|post|include)\\b"
+      ]
+    },
+    {
+      "id": "GD203",
+      "severity": "medium",
+      "category": "injection",
+      "title": "Fake system or priority tags",
+      "why": "Tags like <IMPORTANT> or [SYSTEM] inside a tool description try to make the model treat the text as a higher-priority instruction. They were the core of the published MCP tool-poisoning attacks.",
+      "fix": "Write tool descriptions as plain descriptions of what the tool does; drop the tags.",
+      "refs": [
+        "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
+      ],
+      "severity_by_kind": {
+        "tool": "high",
+        "code": "high"
+      },
+      "patterns": [
+        "<\\s*/?\\s*(IMPORTANT|SYSTEM|ADMIN|INSTRUCTIONS?|HIDDEN|SECRET)\\s*>",
+        "\\[\\s*(SYSTEM|ADMIN)\\s*(MESSAGE|NOTE|INSTRUCTIONS?|OVERRIDE)?\\s*\\]"
+      ]
+    },
+    {
+      "id": "GD204",
+      "severity": "high",
+      "category": "injection",
+      "title": "Changes how other tools behave (tool shadowing)",
+      "why": "A tool description that gives orders about a different tool can hijack it, for example by redirecting every email to an attacker. The user only approved the first tool.",
+      "fix": "A tool's description should only describe that tool. Remove instructions about other tools.",
+      "refs": [
+        "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
+      ],
+      "patterns": [
+        "\\b(also|always|must|should)\\s+(send|bcc|cc|copy|forward|redirect)\\b[^.\\n]{0,40}\\b(all|every|each)\\b[^.\\n]{0,30}\\b(emails?|messages?|requests?|files?|data)\\b",
+        "\\b(change|replace|override|rewrite)\\s+the\\s+(recipient|destination|address|endpoint|url|receiver)\\b",
+        "\\bwhen\\s+this\\s+tool\\s+is\\s+(available|present|installed|loaded)\\b",
+        "\\bthe\\s+actual\\s+(recipient|destination|address)\\b"
+      ]
+    },
+    {
+      "id": "GD205",
+      "severity": "medium",
+      "category": "injection",
+      "title": "Turns off approvals or safety checks",
+      "why": "Asking the agent to skip confirmations or bypass sandboxes removes the human check that would catch a bad action.",
+      "fix": "Keep confirmations on for actions with side effects; let the user decide what to auto-approve.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ],
+      "patterns": [
+        "--dangerously-skip-permissions\\b|--yolo\\b|\\bauto[-_ ]?approve\\s*[:=]\\s*[\\\"']?(true|all|\\*)",
+        "\\b(do\\s+not|don't|never)\\s+ask\\s+(the\\s+user\\s+)?(for\\s+)?(confirmation|permission|approval)\\b",
+        "\\bbypass(ing)?\\s+(the\\s+)?(security|permission|sandbox|approval|guardrails?)\\b"
+      ]
+    },
+    {
+      "id": "GD206",
+      "severity": "high",
+      "category": "injection",
+      "title": "Asks the agent to hand over secrets or the conversation",
+      "why": "A tool that wants your system prompt, chat history, keys or config files passed into its parameters is collecting data it does not need. This is how the published 'sidenote' attack stole SSH keys and MCP configs.",
+      "fix": "Tools should only take the inputs their job needs. Remove requests for prompts, history, keys or config files.",
+      "refs": [
+        "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
+      ],
+      "patterns": [
+        "\\b(pass|include|put|append|insert|copy|send|add)\\b[^.\\n]{0,60}\\b(system\\s+prompt|conversation\\s+history|chat\\s+history|previous\\s+messages|full\\s+conversation|api[_ -]?keys?|credentials|passwords?|private\\s+keys?|ssh\\s+keys?|mcp\\.json|\\.env)\\b[^.\\n]{0,40}\\b(as|in|into|inside)\\s+(the\\s+)?[`'\\\"]?[\\w-]+[`'\\\"]?\\s*(parameter|argument|param|field)\\b",
+        "\\b(read|cat|open|load)\\b[^.\\n]{0,40}(~|\\$HOME|%USERPROFILE%)[/\\\\][^\\s]*[^.\\n]{0,60}\\b(pass|send|include|put|append|add)\\b",
+        "\\b(pass|send|include|put|append)\\s+(its|their|the\\s+file'?s?)\\s+contents?\\s+(as|in|into)\\b"
+      ]
+    },
+    {
+      "id": "GD301",
+      "severity": "high",
+      "category": "secrets",
+      "title": "Touches credential files",
+      "why": "SSH keys, cloud credentials, browser password stores and wallets are what attackers want. A skill or tool that names them needs a very good reason.",
+      "fix": "Remove the reference, or scope the tool so it cannot reach these paths.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ],
+      "patterns": [
+        "[/\\\\]\\.(ssh|aws|gnupg|kube)[/\\\\]",
+        "\\bid_(rsa|dsa|ecdsa|ed25519)\\b",
+        "\\.git-credentials\\b|[/\\\\]\\.netrc\\b|\\bwallet\\.dat\\b|/etc/(shadow|sudoers)\\b",
+        "\\bLogin\\s+Data\\b|\\bcookies\\.sqlite\\b|\\blogins\\.json\\b|\\bKeychains?[/\\\\]",
+        "[/\\\\]\\.docker[/\\\\]config\\.json\\b|[/\\\\]\\.config[/\\\\]gh[/\\\\]hosts\\.yml\\b"
+      ]
+    },
+    {
+      "id": "GD310",
+      "severity": "high",
+      "category": "secrets",
+      "title": "Hard-coded secret",
+      "why": "A real key in a skill, config or tool file is exposed to everyone who installs it and to the model's context.",
+      "fix": "Rotate the key now, then load it from an environment variable or a secret store.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ],
+      "mask": true,
+      "patterns": [
+        "\\bAKIA[0-9A-Z]{16}\\b",
+        "\\bgh[pousr]_[A-Za-z0-9]{36,}\\b|\\bgithub_pat_[A-Za-z0-9_]{50,}\\b",
+        "\\bsk-(ant-|proj-)?[A-Za-z0-9_-]{32,}",
+        "\\bxox[abprs]-[A-Za-z0-9-]{10,}",
+        "\\bAIza[0-9A-Za-z_-]{35}\\b",
+        "-----BEGIN\\s(RSA\\s|EC\\s|DSA\\s|OPENSSH\\s|PGP\\s)?PRIVATE\\sKEY-----"
+      ]
+    },
+    {
+      "id": "GD311",
+      "severity": "medium",
+      "category": "secrets",
+      "title": "Password or token written in plain text",
+      "why": "A password or token assigned to a literal value usually means a real credential is checked in.",
+      "fix": "Move the value to an environment variable or secret store and reference it by name.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ],
+      "mask": true,
+      "patterns": [
+        "\\b(password|passwd|pwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token)\\b[\\\"']?\\s*[:=]\\s*[\\\"']?[^\\s\\\"'`$<{(,;]{8,}"
+      ]
+    },
+    {
+      "id": "GD401",
+      "severity": "critical",
+      "category": "execution",
+      "title": "Downloads and runs code in one step",
+      "why": "Piping a download straight into a shell (or eval of decoded data) runs whatever the server returns today, with no review. If the agent runs this, the author controls your machine.",
+      "fix": "Pin and vendor the script, check its hash, or install from a package manager with a fixed version.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ],
+      "patterns": [
+        "\\b(curl|wget)\\b[^|\\n]{0,200}\\|\\s*(sudo\\s+)?(ba|z|da)?sh\\b",
+        "\\b(curl|wget)\\b[^|\\n]{0,200}\\|\\s*(sudo\\s+)?(python3?|perl|ruby|node)\\b",
+        "\\b(iex|Invoke-Expression)\\b[^\\n]{0,80}\\b(iwr|irm|Invoke-WebRequest|Invoke-RestMethod|DownloadString|Net\\.WebClient)\\b",
+        "\\b(iwr|irm|Invoke-WebRequest|Invoke-RestMethod)\\b[^|\\n]{0,200}\\|\\s*(iex|Invoke-Expression)\\b",
+        "\\bpowershell(\\.exe)?\\b[^\\n]{0,40}\\s-(e|enc|encodedcommand)\\s+[A-Za-z0-9+/=]{20,}",
+        "\\beval\\s*\\(\\s*(atob|Buffer\\.from)\\s*\\(",
+        "\\bexec\\s*\\(\\s*(base64\\.b64decode|codecs\\.decode|bytes\\.fromhex|zlib\\.decompress|marshal\\.loads)",
+        "\\bexec\\s*\\(\\s*(urllib\\.request\\.urlopen|requests\\.get|urlopen)\\s*\\("
+      ]
+    },
+    {
+      "id": "GD402",
+      "severity": "high",
+      "category": "exfiltration",
+      "title": "Sends data to a known drop-box endpoint",
+      "why": "Webhook catchers, paste sites and tunnelling services are where stolen data usually goes. Real tools rarely talk to them.",
+      "fix": "Remove the endpoint, or explain in the description exactly what is sent and why.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ],
+      "patterns": [
+        "discord(app)?\\.com/api/webhooks|hooks\\.slack\\.com/services|webhook\\.site|requestbin|pipedream\\.net",
+        "[\\w-]+\\.ngrok(-free)?\\.(io|app|dev)|pastebin\\.com/api|transfer\\.sh|api\\.telegram\\.org/bot",
+        "\\.oast\\.(fun|me|pro|live|site|online)\\b|\\binteract\\.sh\\b|burpcollaborator\\.net|canarytokens\\.com"
+      ]
+    },
+    {
+      "id": "GD403",
+      "severity": "medium",
+      "category": "exfiltration",
+      "title": "Uploads a local file",
+      "why": "Sending a local file to a server is exactly how data leaves your machine. It is fine for upload tools, but it must be what the user asked for.",
+      "fix": "Make sure the upload target and the file are what the skill's description promises.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ],
+      "applies": [
+        "instructions",
+        "code",
+        "config",
+        "other"
+      ],
+      "patterns": [
+        "\\bcurl\\b[^\\n]{0,120}\\s(-d|--data(-binary|-raw|-urlencode)?|-F|--form|-T|--upload-file)\\s+[\\\"']?[\\w-]*=?@",
+        "\\b(Invoke-WebRequest|Invoke-RestMethod|iwr|irm)\\b[^\\n]{0,160}-InFile\\b",
+        "\\brequests\\.(post|put)\\([^)\\n]{0,160}\\bfiles\\s*=",
+        "\\bnc(at)?\\s+(-\\w+\\s+)*[\\w.-]+\\s+\\d{2,5}\\s*<"
+      ]
+    },
+    {
+      "id": "GD404",
+      "severity": "high",
+      "category": "execution",
+      "title": "Destructive command",
+      "why": "Recursive deletes of home or root folders, disk formatting and fork bombs cannot be undone.",
+      "fix": "Remove the command, or narrow it to a specific folder the skill created.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ],
+      "patterns": [
+        "\\brm\\s+-[a-zA-Z]*[rR][a-zA-Z]*\\s+(--no-preserve-root\\s+)?(/|~|\\$HOME|/\\*|~/\\*)(?=\\s|$|[\\\"';])",
+        "\\bRemove-Item\\b[^\\n]{0,80}-Recurse[^\\n]{0,80}(\\bC:\\\\(?=[\\s\\\"'])|\\$HOME\\b|\\$env:USERPROFILE\\b|~(?=[\\s\\\"']|$))",
+        "\\bmkfs(\\.\\w+)?\\s+/dev/|\\bformat\\s+[a-zA-Z]:\\s*/[qQyY]",
+        "\\bdd\\s+if=[^\\n]{0,60}of=/dev/(sd|nvme|disk|hd)",
+        ":\\(\\)\\s*\\{\\s*:\\s*\\|\\s*:\\s*&\\s*\\}\\s*;\\s*:"
+      ]
+    },
+    {
+      "id": "GD405",
+      "severity": "medium",
+      "category": "execution",
+      "title": "Installs itself to run again later",
+      "why": "Scheduled tasks, startup entries and shell profile edits keep code running after the agent session ends.",
+      "fix": "Remove the persistence step, or document it in the description so the user knows.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ],
+      "patterns": [
+        "\\bschtasks(\\.exe)?\\s+/create\\b|\\bRegister-ScheduledTask\\b|\\\\CurrentVersion\\\\Run(Once)?\\b",
+        "\\bcrontab\\s+-[a-z]*\\s*[^\\n]*|\\(crontab\\s+-l",
+        "\\blaunchctl\\s+(load|bootstrap)\\b|\\bsystemctl\\s+(--user\\s+)?enable\\b",
+        ">>\\s*[\\\"']?(~|\\$HOME)/\\.(bashrc|zshrc|profile|bash_profile)\\b"
+      ]
+    },
+    {
+      "id": "GD501",
+      "severity": "medium",
+      "category": "config",
+      "title": "MCP server package is not pinned",
+      "why": "npx -y / uvx without a version runs whatever the package's latest release is at start-up. A later update can silently change the tools (a 'rug pull').",
+      "fix": "Pin an exact version, e.g. some-mcp-server@1.4.2 or some-mcp-server==1.4.2.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ]
+    },
+    {
+      "id": "GD502",
+      "severity": "medium",
+      "category": "config",
+      "title": "MCP server gets your whole disk or home folder",
+      "why": "Giving a server the root or home folder lets one bad tool call read SSH keys, browser data and every project.",
+      "fix": "Pass only the project folders the server needs.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ],
+      "severity_if_filesystem": "high"
+    },
+    {
+      "id": "GD503",
+      "severity": "high",
+      "category": "config",
+      "title": "Remote MCP server over plain HTTP",
+      "why": "Tool calls and results travel unencrypted, so anyone on the network can read or change them.",
+      "fix": "Use an https:// URL (or a localhost address for local servers).",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ]
+    },
+    {
+      "id": "GD504",
+      "severity": "medium",
+      "category": "config",
+      "title": "Secret written into the MCP config",
+      "why": "Config files get shared, synced and committed. A literal token here leaks with them.",
+      "fix": "Reference an environment variable (e.g. ${GITHUB_TOKEN}) instead of the literal value.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ],
+      "mask": true
+    },
+    {
+      "id": "GD505",
+      "severity": "medium",
+      "category": "config",
+      "title": "MCP server starts through an inline shell command",
+      "why": "bash -c / cmd /c / powershell -Command hide what really runs behind one string, and are easy to tamper with.",
+      "fix": "Point command at the server binary and pass plain args.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ]
+    },
+    {
+      "id": "GD506",
+      "severity": "high",
+      "category": "config",
+      "title": "Container runs with host-level access",
+      "why": "--privileged, the Docker socket or a / mount gives the server control of the host, not just the container.",
+      "fix": "Drop --privileged and mount only the folders the server needs.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ]
+    },
+    {
+      "id": "GD601",
+      "severity": "low",
+      "category": "tool",
+      "title": "Very long tool description",
+      "why": "Tool descriptions go straight into the model's context. Long ones leave room to hide instructions and are rarely read in full by the user.",
+      "fix": "Keep descriptions short and factual; move documentation elsewhere.",
+      "refs": [
+        "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
+      ]
+    },
+    {
+      "id": "GD602",
+      "severity": "high",
+      "category": "tool",
+      "title": "Side-channel parameter",
+      "why": "A parameter like 'sidenote' or 'context' that the description asks to fill with file contents or conversation is a hidden way to move data out.",
+      "fix": "Remove the parameter, or make its purpose explicit and narrow.",
+      "refs": [
+        "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
+      ]
+    },
+    {
+      "id": "GD603",
+      "severity": "high",
+      "category": "tool",
+      "title": "Description talks about another tool",
+      "why": "One tool's description naming another tool from the same server is how cross-tool shadowing attacks redirect actions.",
+      "fix": "Describe only this tool.",
+      "refs": [
+        "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
+      ]
+    },
+    {
+      "id": "GD701",
+      "severity": "medium",
+      "category": "scope",
+      "title": "Skill does more than it says",
+      "why": "The skill's code or instructions use a capability (network, shell, credentials, deleting files, persistence) that its own description never mentions. Users approve skills from the description, so an undeclared capability is how a harmless-looking skill does harm.",
+      "fix": "Either remove the capability or say in the description what it does and why.",
+      "refs": [
+        "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
+      ]
+    },
+    {
+      "id": "GD801",
+      "severity": "high",
+      "category": "pinning",
+      "title": "Changed since you pinned it",
+      "why": "This file or tool description changed after you approved it. Silent changes after approval are the 'rug pull' attack.",
+      "fix": "Review the diff. If it is fine, run gardu lock again to approve the new version.",
+      "refs": [
+        "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
+      ]
+    },
+    {
+      "id": "GD802",
+      "severity": "medium",
+      "category": "pinning",
+      "title": "New since you pinned it",
+      "why": "A file or tool appeared that was not there when you approved this set.",
+      "fix": "Review it, then run gardu lock again.",
+      "refs": [
+        "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
+      ]
+    }
+  ],
+  "capabilities": {
+    "network": {
+      "label": "network access",
+      "patterns": [
+        "\\brequests\\.(get|post|put|patch|delete|Session)\\b|\\burllib\\.request\\b|\\bhttp\\.client\\b|\\bhttpx\\.|\\baiohttp\\b",
+        "\\bfetch\\s*\\(\\s*[\\\"'`]https?:|\\baxios\\b|\\bXMLHttpRequest\\b|\\bnew\\s+WebSocket\\s*\\(",
+        "\\b(curl|wget)\\s+(-\\S+\\s+)*[\\\"']?https?://|\\b(Invoke-WebRequest|Invoke-RestMethod)\\b",
+        "\\bsocket\\.(create_connection|socket)\\b|\\bftplib\\b|\\bsmtplib\\b|\\bparamiko\\b"
+      ],
+      "declare": [
+        "download",
+        "upload",
+        "fetch",
+        "api",
+        "web",
+        "http",
+        "url",
+        "online",
+        "internet",
+        "network",
+        "search",
+        "sync",
+        "publish",
+        "github",
+        "remote",
+        "server",
+        "cloud",
+        "send",
+        "post",
+        "request",
+        "browse",
+        "scrape",
+        "crawl",
+        "email",
+        "mail",
+        "slack",
+        "webhook",
+        "ftp",
+        "deploy",
+        "link",
+        "website",
+        "site",
+        "page",
+        "connect",
+        "import",
+        "integration"
+      ]
+    },
+    "shell": {
+      "label": "running shell commands",
+      "patterns": [
+        "\\bsubprocess\\.(run|call|Popen|check_output|check_call)\\b|\\bos\\.(system|popen)\\s*\\(",
+        "\\bchild_process\\b|\\bexecSync\\s*\\(|\\bspawnSync?\\s*\\(",
+        "\\bStart-Process\\b|\\bInvoke-Expression\\b"
+      ],
+      "declare": [
+        "run",
+        "execute",
+        "command",
+        "shell",
+        "terminal",
+        "script",
+        "build",
+        "install",
+        "compile",
+        "test",
+        "cli",
+        "automat",
+        "convert",
+        "render",
+        "generate",
+        "process",
+        "launch",
+        "tool"
+      ]
+    },
+    "credentials": {
+      "label": "reading credentials",
+      "patterns": [
+        "[/\\\\]\\.(ssh|aws|gnupg|kube)[/\\\\]|\\bid_(rsa|ed25519)\\b|\\.git-credentials\\b|\\bkeyring\\.get_password\\b",
+        "\\bLogin\\s+Data\\b|\\bcookies\\.sqlite\\b|\\bgetpass\\.getpass\\b"
+      ],
+      "declare": [
+        "login",
+        "log in",
+        "sign in",
+        "auth",
+        "credential",
+        "password",
+        "token",
+        "key",
+        "account",
+        "secret",
+        "ssh",
+        "keychain",
+        "vault"
+      ]
+    },
+    "delete": {
+      "label": "deleting files",
+      "patterns": [
+        "\\bshutil\\.rmtree\\s*\\(|\\bos\\.(remove|unlink|rmdir)\\s*\\(|\\bfs\\.(rm|rmdir|unlink)(Sync)?\\s*\\(",
+        "\\brm\\s+-[a-zA-Z]*[rR]|\\bRemove-Item\\b[^\\n]{0,60}-Recurse"
+      ],
+      "declare": [
+        "delete",
+        "remove",
+        "clean",
+        "prune",
+        "purge",
+        "uninstall",
+        "reset",
+        "wipe",
+        "tidy",
+        "temporary",
+        "temp",
+        "cache",
+        "replace",
+        "overwrite",
+        "rebuild",
+        "organize",
+        "organise",
+        "build",
+        "bundle",
+        "compile",
+        "package",
+        "artifact"
+      ]
+    },
+    "persistence": {
+      "label": "installing itself to run later",
+      "patterns": [
+        "\\bschtasks(\\.exe)?\\s+/create\\b|\\bRegister-ScheduledTask\\b|\\\\CurrentVersion\\\\Run(Once)?\\b",
+        "\\(crontab\\s+-l|\\bcrontab\\s+-[a-z]*\\s|\\blaunchctl\\s+(load|bootstrap)\\b|\\bsystemctl\\s+(--user\\s+)?enable\\b",
+        ">>\\s*[\\\"']?(~|\\$HOME)/\\.(bashrc|zshrc|profile|bash_profile)\\b"
+      ],
+      "declare": [
+        "schedule",
+        "startup",
+        "cron",
+        "daemon",
+        "service",
+        "background",
+        "autostart",
+        "recurring",
+        "every day",
+        "daily",
+        "awake",
+        "boot",
+        "login item",
+        "periodic"
+      ]
+    }
+  },
+  "negation_words": "\\b(never|don't|do\\s+not|dont|avoid|instead\\s+of|not\\s+to|must\\s+not|should\\s+not|warning|example|e\\.g\\.)\\b",
+  "downgrade_categories": [
+    "execution",
+    "exfiltration",
+    "secrets"
+  ],
+  "downgrade_rules": [
+    "GD201"
+  ],
+  "comment_prefixes": [
+    "//",
+    "#",
+    "*",
+    "/*",
+    "--",
+    ";",
+    "rem ",
+    "::",
+    "<!--",
+    "'"
+  ],
+  "capability_kinds": [
+    "code"
+  ]
+}

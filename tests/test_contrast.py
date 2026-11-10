@@ -3,10 +3,11 @@
 Prior hone rounds repeatedly scored C5 "contrast unverified": the severity colours and the
 light-theme decoded-text callout looked borderline for WCAG AA but nobody measured them. This
 suite makes that a durable, CI-enforced fact. It parses the theme variables straight out of
-web/styles.css and asserts the severity colours, the decoded-text callout label, and the decoded
-body text clear WCAG AA (4.5:1 for normal text) in BOTH themes. If a future palette change drops
-any of these below AA, this suite fails CI here - so the C5 "severity colours that pass contrast"
-anchor cannot regress silently behind a visual change.
+web/styles.css and asserts the severity colours, the decoded-text callout label, the decoded body
+text, and the FAIL/REVIEW/PASS verdict banner clear WCAG AA in BOTH themes (4.5:1 for normal text,
+3:1 for the large 1.35rem/800 verdict word). If a future palette change drops any of these below
+AA, this suite fails CI here - so the C5 "severity colours that pass contrast" anchor cannot
+regress silently behind a visual change.
 
 The colour math is the WCAG 2.x relative-luminance / contrast-ratio formula. Tinted surfaces
 (e.g. the dashed `.hidden-text` box, which is `color-mix(in srgb, <critical> 6%, transparent)`
@@ -22,6 +23,7 @@ APP = Path(__file__).resolve().parent.parent
 CSS = (APP / "web" / "styles.css").read_text(encoding="utf-8")
 
 AA = 4.5  # WCAG AA minimum for normal text
+AA_LARGE = 3.0  # WCAG AA minimum for large text (the verdict word is 1.35rem weight-800 = large)
 failures = []
 
 
@@ -82,7 +84,7 @@ def theme_variables(theme):
 for theme in ("dark", "light"):
     v = theme_variables(theme)
     panel = v.get("--panel")
-    for name in ("--sev-critical", "--sev-high", "--sev-medium", "--sev-low", "--text"):
+    for name in ("--sev-critical", "--sev-high", "--sev-medium", "--sev-low", "--pass", "--text"):
         check(name in v, f"{theme}: web/styles.css is missing {name}")
     check(panel is not None, f"{theme}: web/styles.css is missing --panel")
     if panel is None:
@@ -108,10 +110,26 @@ for theme in ("dark", "light"):
         check(body_ratio >= AA,
               f"{theme}: decoded body text is {body_ratio:.2f}:1, below WCAG AA {AA}:1")
 
+    # Verdict banner (.verdict-word): a large 1.35rem weight-800 word (>=14pt bold = large text),
+    # so its WCAG AA bar is 3:1, not 4.5:1. Each word is its severity colour over a light tint of
+    # that colour on the panel (see .verdict.FAIL/.REVIEW/.PASS in styles.css).
+    for key, label, tint in (
+        ("--sev-critical", "FAIL", 0.09),
+        ("--sev-medium", "REVIEW", 0.10),
+        ("--pass", "PASS", 0.09),
+    ):
+        colour = v.get(key)
+        if colour is None:
+            continue
+        verdict_bg = mix_over(colour, panel, tint)
+        ratio = contrast(colour, verdict_bg)
+        check(ratio >= AA_LARGE,
+              f"{theme}: verdict '{label}' word is {ratio:.2f}:1, below WCAG AA large {AA_LARGE}:1")
+
 if failures:
     print("FAILED")
     for failure in failures:
         print(" -", failure)
     sys.exit(1)
 
-print("OK - WCAG AA contrast holds for severity colours + decoded-text callout (both themes)")
+print("OK - WCAG AA contrast holds for severity colours, decoded-text callout + verdict banner (both themes)")

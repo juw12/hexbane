@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SUITES = [
     ("scanner, lock, call gate, CLI", [sys.executable, "tests/test_scanner.py"], ROOT),
     ("web app hermetic checks", [sys.executable, "tests/test_web.py"], ROOT),
+    ("WCAG AA contrast (severity + decoded callout)", [sys.executable, "tests/test_contrast.py"], ROOT),
     ("server (chat, load and call gates)", [sys.executable, "tests.py"], ROOT / "server"),
 ]
 

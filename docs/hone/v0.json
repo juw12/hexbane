@@ -29,7 +29,7 @@
         "C5": "Clean hierarchy and PWA support; contrast not verified."
       },
       "fixes": [
-        "Implement the install-free static scanner for MCP servers and tools (Core Gardu goal missing).",
+        "Implement the install-free static scanner for MCP servers and tools (Core Hexbane goal missing).",
         "Add runtime tool-call gating and rug-pull detection to reach Security Depth level 10.",
         "Integrate SARIF output and GitHub Action for CI-ready usability."
       ],
@@ -95,7 +95,7 @@
   "fixes": [
     {
       "judge": "Pega-Vision",
-      "fix": "Implement the install-free static scanner for MCP servers and tools (Core Gardu goal missing)."
+      "fix": "Implement the install-free static scanner for MCP servers and tools (Core Hexbane goal missing)."
     },
     {
       "judge": "Pega-Vision",

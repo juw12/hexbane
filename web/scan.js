@@ -248,7 +248,8 @@
   const FOLD_STEPS = [
     [/(?<=[A-Za-z])(\*{1,2}|~~|`)(?=[A-Za-z])/g, ""],
     [/(?<=[A-Za-z])(''|"")(?=[A-Za-z])/g, ""],
-    [/(?<![A-Za-z] )(?<![A-Za-z])[A-Za-z](?: [A-Za-z])+(?![A-Za-z])(?! [A-Za-z](?![A-Za-z]))/g, "SPACED"],
+    // a run of single letters; may follow a normal word ("json a n d"), never a letter glued to other characters
+    [/(?<!\s[A-Za-z] )(?<!^[A-Za-z] )(?<![\w-])[A-Za-z](?: [A-Za-z])+(?![A-Za-z])(?! [A-Za-z](?![A-Za-z]))/g, "SPACED"],
   ];
   const FOLD_NEWLINE = /(?<=[^\n])\n(?=[^\n])/g;
   const FOLD_GAPS = /(?<=\S)[ \t]{2,}(?=\S)/g;
@@ -338,6 +339,67 @@
           scan.add(rule.id, line, { hidden: snippet, severity });
           if (disguised.slice(start, end).some(Boolean)) scan.add("HB106", line, { hidden: snippet });
         }
+      }
+    }
+  }
+
+  // ------------------------------------------------------------ letter-spaced text (squeeze pass)
+  // Letters typed one space apart lose their word gaps once joined, so the fold pass cannot read them. For each line
+  // with a run of 8+ spaced letters, remove every space and match space-tolerant versions of the fold rules; a match
+  // only counts if it covers part of the run. Mirrors scan_squeezed in hexbane/scanner.py.
+  const SQUEEZE_RUN = /(?<![A-Za-z0-9])[A-Za-z](?:[ \t]{1,3}[A-Za-z]){7,}(?![A-Za-z0-9])/g;
+
+  function squeezePatterns(rule) {
+    if (!rule.squeezed) {
+      rule.squeezed = rule.compiled.map((pattern) => {
+        const source = pattern.source.replace(/\\b/g, "").replace(/\\s\+/g, "\\s*");
+        const flags = pattern.flags.includes("g") ? pattern.flags : pattern.flags + "g";
+        return new RegExp(source, flags);
+      });
+    }
+    return rule.squeezed;
+  }
+
+  function scanSqueezed(scan, clean) {
+    const translated = R.confusableRe ? clean.replace(R.confusableRe, (ch) => R.confusables[ch]) : clean;
+    const lines = translated.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const lineNumber = i + 1;
+      const runs = [];
+      SQUEEZE_RUN.lastIndex = 0;
+      let run;
+      while ((run = SQUEEZE_RUN.exec(line)) !== null) runs.push([run.index, run.index + run[0].length]);
+      if (!runs.length) continue;
+      let squeezed = "";
+      const inRun = [];
+      for (let index = 0; index < line.length; index++) {
+        if (/\s/.test(line[index])) continue;
+        squeezed += line[index];
+        inRun.push(runs.some(([start, end]) => start <= index && index < end));
+      }
+      let readable = line;
+      for (let r = runs.length - 1; r >= 0; r--) {
+        const [start, end] = runs[r];
+        readable = readable.slice(0, start) + readable.slice(start, end).replace(/\s+/g, "") + readable.slice(end);
+      }
+      readable = squash(readable).slice(0, 300);
+      for (const rule of R.rules) {
+        if (!R.foldRules.has(rule.id) || !rule.compiled.length || !applies(rule, scan.kind)) continue;
+        if (scan.seen.has(rule.id + "|" + lineNumber + "|")) continue;
+        let found = false;
+        for (const pattern of squeezePatterns(rule)) {
+          pattern.lastIndex = 0;
+          let match;
+          while ((match = pattern.exec(squeezed)) !== null) {
+            if (match[0].length === 0) { pattern.lastIndex++; continue; }
+            if (inRun.slice(match.index, match.index + match[0].length).some(Boolean)) { found = true; break; }
+          }
+          if (found) break;
+        }
+        if (!found) continue;
+        scan.add(rule.id, lineNumber, { hidden: readable, severity: severityFor(rule, scan.kind) });
+        scan.add("HB106", lineNumber, { hidden: readable });
       }
     }
   }
@@ -553,6 +615,7 @@
     const clean = stripHidden(text);
     scanPatterns(scan, clean);
     scanFolded(scan, clean);
+    scanSqueezed(scan, clean);
     scanComments(scan, clean);
     scanBase64(scan, clean);
     scanCodeTools(scan, clean);

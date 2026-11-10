@@ -34,7 +34,7 @@ indistinguishable from real ones to a pattern scanner - suppress with `hexbane-i
 |---|---|---|---|
 | Tuning | 23/24 (m23 is low-only by design) | 1/7 (b04 by design) | 31/31 |
 | **Held-out** | **11/11** | **0/5** | 15/16 |
-| **Disguised set** | 53/65 without unfolding -> **63/65** with it; rules kept 72/123 -> **109/123** | - | - |
+| **Disguised set** | 53/65 without unfolding -> **65/65** with it; rules kept 72/123 -> **116/123** | - | - |
 | Invariant PoCs | 3/3 FAIL | - | - |
 | anthropics/skills | - | 5 of 273 files (1 FAIL, 4 REVIEW) | - |
 | MCP servers | - | 2 of 388 files (0 FAIL, 2 REVIEW) | - |
@@ -43,12 +43,14 @@ Held-out miss: `h07-zed-config` (an MCP config in Zed's format with an unpinned 
 instead of FAIL - both findings fired, but at medium severity because inline secrets are often placeholders in example
 configs. Not tuned after the fact.
 
-Disguised-set misses: both versions of `m22-file-upload` with spaced letters (`-F f i l e=@...`): the spaced flag
-letters merge into one word, so the upload pattern no longer matches. Uniform spacing (the same gap between letters as
-between words) is only partly recovered (8/14 rules) because word boundaries are lost. Line-broken words keep 10/14
-rules; homoglyphs 23/25. Not tuned further on this set.
+Disguised set: every sample is flagged. Letters spaced with the same gap as the words around them
+(`i g n o r e a l l`) lose their word boundaries, so a squeeze pass handles them: on any line with 8+ single
+letters in a row it removes the spaces and matches space-tolerant versions of the injection, exfiltration and
+command rules; a match only counts if it overlaps the spaced run. The spaced-flag miss (`-F f i l e=@...` glued
+into `-Ffile`) was a bug in where a spaced run may start, now fixed. Remaining drop-outs: words broken across lines
+keep 10/14 rules, look-alike letters 23/25, shell-quote splits 2/3. Not tuned further on this set.
 
-The unfolding pass did not change any public-folder result (same 5 + 2 files as v0.1).
+The unfolding and squeeze passes did not change any public-folder result (same 5 + 2 files as v0.1).
 
 Speed: about 0.1 MB/s in pure Python on a busy laptop (3.5 MB of skills in 39 s with the unfolding pass, measured
 while other jobs ran; 18 s in v0.1 on an idle machine, about 27% overhead measured back to back); the browser is similar.
@@ -149,9 +151,9 @@ Exact verdict: 15/16 - malicious caught: 11/11 - benign false alarms: 0/5
 | linebreak | 7 | 6/7 | 7/7 | 7/14 | 10/14 |
 | markdown | 7 | 6/7 | 7/7 | 7/14 | 14/14 |
 | shellquote | 2 | 0/2 | 2/2 | 0/3 | 2/3 |
-| spaced | 7 | 6/7 | 6/7 | 7/14 | 13/14 |
-| spaced-uniform | 7 | 6/7 | 6/7 | 7/14 | 8/14 |
-| **all** | 65 | 53/65 | 63/65 | 72/123 | 109/123 |
+| spaced | 7 | 6/7 | 7/7 | 7/14 | 14/14 |
+| spaced-uniform | 7 | 6/7 | 7/7 | 7/14 | 14/14 |
+| **all** | 65 | 53/65 | 65/65 | 72/123 | 116/123 |
 
 ## Public folders (unlabelled)
 

@@ -311,7 +311,9 @@ FOLD_STEPS = [
     # (pattern, replacement); replacement None means "decode the entity"
     (re.compile(r"(?<=[A-Za-z])(\*{1,2}|~~|`)(?=[A-Za-z])"), ""),          # ig**no**re
     (re.compile(r"(?<=[A-Za-z])(''|\"\")(?=[A-Za-z])"), ""),                # cu''rl
-    (re.compile(r"(?<![A-Za-z] )(?<![A-Za-z])[A-Za-z](?: [A-Za-z])+(?![A-Za-z])(?! [A-Za-z](?![A-Za-z]))"), "SPACED"),  # i g n o r e
+    # i g n o r e : a run of single letters. It may follow a normal word ("json a n d"), but not a letter glued to
+    # other characters ("-F f i l e" must not become "-Ffile"), and never starts in the middle of another run.
+    (re.compile(r"(?<!\s[A-Za-z] )(?<!^[A-Za-z] )(?<![\w-])[A-Za-z](?: [A-Za-z])+(?![A-Za-z])(?! [A-Za-z](?![A-Za-z]))"), "SPACED"),
 ]
 FOLD_NEWLINE = re.compile(r"(?<=[^\n])\n(?=[^\n])")
 FOLD_GAPS = re.compile(r"(?<=\S)[ \t]{2,}(?=\S)")
@@ -440,6 +442,56 @@ def scan_hidden_chars(scan: FileScan) -> None:
 
 HTML_COMMENT = re.compile(r"<!--([\s\S]*?)-->")
 BASE64_BLOB = re.compile(r"[A-Za-z0-9+/]{200,}={0,2}")
+
+
+# ---------------------------------------------------------------- letter-spaced text (squeeze pass)
+
+SQUEEZE_RUN = re.compile(r"(?<![A-Za-z0-9])[A-Za-z](?:[ \t]{1,3}[A-Za-z]){7,}(?![A-Za-z0-9])")
+
+
+def squeeze_patterns(rule: dict) -> list:
+    """Space-tolerant versions of a rule's patterns: word gaps become optional and word boundaries are dropped."""
+    if "squeezed" not in rule:
+        rule["squeezed"] = [
+            re.compile(pattern.pattern.replace(r"\b", "").replace(r"\s+", r"\s*"), pattern.flags)
+            for pattern in rule["compiled"]
+        ]
+    return rule["squeezed"]
+
+
+def scan_squeezed(scan: FileScan, clean: str) -> None:
+    """Letters typed one space apart ("i g n o r e a l l p r e v i o u s") lose their word gaps once joined, so the
+    fold pass cannot read them. For each line holding a run of 8+ spaced letters, remove every space and match
+    space-tolerant versions of the fold rules. A match only counts if it covers part of the spaced run, so normal
+    text on the same line cannot trigger it."""
+    translated = clean.translate(CONFUSABLE_TABLE)
+    for line_number, line in enumerate(translated.split("\n"), start=1):
+        runs = [(match.start(), match.end()) for match in SQUEEZE_RUN.finditer(line)]
+        if not runs:
+            continue
+        squeezed_chars, in_run = [], []
+        for index, char in enumerate(line):
+            if char.isspace():
+                continue
+            squeezed_chars.append(char)
+            in_run.append(any(start <= index < end for start, end in runs))
+        squeezed = "".join(squeezed_chars)
+        readable = line
+        for start, end in reversed(runs):
+            readable = readable[:start] + re.sub(r"\s+", "", readable[start:end]) + readable[end:]
+        readable = " ".join(readable.split())[:300]
+        for rule in RULES["rules"]:
+            if rule["id"] not in FOLD_RULES or not rule.get("compiled") or not applies(rule, scan.kind):
+                continue
+            if (rule["id"], line_number, "") in scan.seen:
+                continue
+            for pattern in squeeze_patterns(rule):
+                match = next((m for m in pattern.finditer(squeezed) if any(in_run[m.start():m.end()])), None)
+                if match is None:
+                    continue
+                scan.add(rule["id"], line_number, hidden=readable, severity=severity_for(rule, scan.kind))
+                scan.add("HB106", line_number, hidden=readable)
+                break
 
 
 def scan_comments(scan: FileScan, clean: str) -> None:
@@ -629,6 +681,7 @@ def scan_text(path: str, text: str) -> tuple[str, list[Finding]]:
     clean = strip_hidden(text)
     scan_patterns(scan, clean)
     scan_folded(scan, clean)
+    scan_squeezed(scan, clean)
     scan_comments(scan, clean)
     scan_base64(scan, clean)
     scan_code_tools(scan, clean)

@@ -1,0 +1,100 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.3,
+    "C2": 0.25,
+    "C3": 0.15,
+    "C4": 0.15,
+    "C5": 0.15
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 9.0,
+        "C3": 10.0,
+        "C4": 10.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Rule GD105 detects encoded text blobs, but the screenshot and README do not explicitly show the decoded content rendered for the user.",
+        "C2": "Fix suggestions are presented as prose ('Fix Remove the concealment wording') rather than copyable code snippets or commands.",
+        "C3": "The 'Gardu' guard post metaphor and 'stay in scope' concept unify the Load, Call, and Chat gates across README and UI.",
+        "C4": "EVALUATION.md separates tuning, held-out, and public sets, explains every false alarm in a table, and links sources.",
+        "C5": "PWA manifest files exist, but no mobile screenshot or explicit responsiveness claim is provided in the README."
+      },
+      "fixes": [
+        "Render decoded content for hidden payload findings (GD105) in the UI to meet the security depth criterion for full trust.",
+        "Format suggested fixes as copyable code blocks or commands in the report to improve actionability.",
+        "Add a mobile screenshot or explicit responsiveness statement to verify the tool works on phones."
+      ],
+      "total": 9.3,
+      "seconds": 68.5
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 10.0,
+        "C2": 10.0,
+        "C3": 9.0,
+        "C4": 10.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "31 rules covering hidden content, injection, secrets, execution/exfiltration, MCP config, tool manifest, scope, and lock; runtime tool-call gate via check-call/check-output; rug-pull detection via lock file (GD801-802); decoded base64 payloads (GD105); measured results on Invariant Labs PoCs, anthropics/skills, and MCP servers",
+        "C2": "Zero-install browser scan with 'Drop a skill folder or files here', sample buttons ('Poisoned MCP tool', 'Skill with hidden text', etc.), SARIF output, action.yml GitHub Action with code scanning upload, inline 'Fix:' copy-paste guidance per finding, and `gardu-ignore: GD401` / `.garduignore` suppressions",
+        "C3": "Unified 'three gates' story (load/call/chat) with shared navigation (Scan, Chat gate, Dashboard, Policy, Accuracy, Integrate) and the 'stay in scope' idea applied across all gates; slight deduction because README notes 'Gardu merges two earlier projects... ScopeGuard... and a new skill and MCP scanner', showing merged rather than natively unified architecture",
+        "C4": "Tuning (31), held-out (16), Invariant PoCs (3), anthropics/skills (273), MCP servers (388) clearly separated; false alarms individually listed with 'Fair?' verdicts; limits section states 'Pattern and structure rules, no model. Paraphrased or novel attacks pass'; sources linked (Invariant Labs, anthropics/skills, modelcontextprotocol/servers); held-out miss h07-zed-config reported honestly as 'left as is, not tuned'",
+        "C5": "Distinctive calm security-tool aesthetic with clear hierarchy (numbered gates, input panel, results), FAIL severity in red with strong contrast, dark theme readable, System theme switcher present; cannot fully verify mobile responsiveness from single desktop screenshot"
+      },
+      "fixes": [],
+      "total": 9.7,
+      "seconds": 19.5
+    },
+    "GLM-5.3-Flash": {
+      "error": "TimeoutError: The read operation timed out",
+      "raw": "",
+      "seconds": 729.5
+    }
+  },
+  "quorum": 2,
+  "council_score": 9.5,
+  "criterion_median": {
+    "C1": 9.5,
+    "C2": 9.5,
+    "C3": 9.5,
+    "C4": 10.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 1.0,
+    "C3": 1.0,
+    "C4": 0.0,
+    "C5": 0.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    9.3,
+    9.7
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Render decoded content for hidden payload findings (GD105) in the UI to meet the security depth criterion for full trust."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Format suggested fixes as copyable code blocks or commands in the report to improve actionability."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Add a mobile screenshot or explicit responsiveness statement to verify the tool works on phones."
+    }
+  ],
+  "label": "council-judged (2 judges)"
+}

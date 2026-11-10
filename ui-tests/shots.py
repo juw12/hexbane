@@ -1,6 +1,6 @@
 """Screenshots of the Scan page (and console-error check) in headless Edge.
 
-    python ui-tests/shots.py [out_dir]     -> scan-empty-dark.png, scan-fail-dark.png, scan-fail-light.png, scan-disguised-dark.png, scan-phone.png
+    python ui-tests/shots.py [out_dir]     -> scan-empty-dark.png, scan-fail-dark.png, scan-fail-light.png, scan-disguised-dark.png, scan-base64-dark.png, scan-phone.png
 Exit 1 if the page logs a JavaScript error.
 """
 
@@ -54,6 +54,10 @@ def main() -> int:
                 page.click('button[data-sample="disguised"]')
                 page.wait_for_selector("text=Disguised text")
                 page.screenshot(path=str(OUT / "scan-disguised-dark.png"), full_page=True)
+                # Base64 payload (HB105): the decoded content is shown under the finding.
+                page.click('button[data-sample="base64"]')
+                page.wait_for_selector(".hidden-text")
+                page.screenshot(path=str(OUT / "scan-base64-dark.png"), full_page=True)
             page.close()
         phone = browser.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2, color_scheme="dark")
         phone.on("pageerror", lambda e: errors.append(str(e)))

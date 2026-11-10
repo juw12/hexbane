@@ -12,6 +12,11 @@ tool list or a whole skill folder. It runs in your browser; your files are never
 
 ![Hexbane decoding disguised instructions in a skill](docs/screenshots/scan-disguised-dark.png)
 
+A base64 payload (HB105) in an MCP config - Hexbane decodes the blob and shows the hidden instructions
+under the finding, in the web app and in every CLI report format:
+
+![Hexbane showing the decoded content of a base64 payload (HB105)](docs/screenshots/scan-base64-dark.png)
+
 Also in [light theme](docs/screenshots/scan-fail-light.png) and [on a phone](docs/screenshots/scan-phone.png).
 
 ## What it does
@@ -68,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: juw12/hexbane@v0.2.1
+      - uses: juw12/hexbane@v0.2.2
         with:
           path: .
           fail-on: high

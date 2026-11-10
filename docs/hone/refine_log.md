@@ -53,3 +53,16 @@ Note: the archived judge outputs (docs/hone/v0.json to v3.json) have the product
   letters, spaces are removed and space-tolerant fold rules must match across the spaced run.
 - Disguised set: files flagged 63/65 -> 65/65; rules kept 109/123 -> 116/123. Tuning 31/31, held-out 15/16,
   public folders unchanged (5/273, 2/388), browser = Python on all 6 corpora, 38 unit tests pass.
+
+## Round 4 (v0.2.2): decoded content for base64 (HB105) findings, shown everywhere
+
+- Closes the v1 council fix idea "decoded HB105 view" (v1.json C1: the screenshot and README did not show the
+  decoded content rendered).
+- Decoded content was already in the data and in the CLI text/SARIF/JSON and the web finding card; the gaps were
+  the CLI **markdown** report (now has a "#### Decoded content" section), the web **Copy report** markdown
+  (now includes a `decoded:` line per finding), and the **evidence**: no base64 sample or screenshot existed.
+- New "Base64 payload" sample on the Scan page (blob assembled at runtime, so the source never looks like an
+  attack) and a new screenshot `docs/screenshots/scan-base64-dark.png` (shots.py), linked from the README next to
+  the words "Hexbane decodes the blob and shows the hidden instructions".
+- Verified: CLI text/md/json/sarif all show the decoded payload on the fixture; 3/3 hermetic suites pass;
+  screenshots 0 JS errors.

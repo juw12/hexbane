@@ -59,6 +59,15 @@ def to_markdown(report: dict) -> str:
             evidence = finding["evidence"].replace("|", "\\|").replace("`", "'")[:120]
             lines.append(f"| {finding['severity']} | {finding['rule']} {finding['title']} | "
                          f"`{finding['file']}:{finding['line']}` | {evidence} |")
+    decoded = []
+    seen = set()
+    for finding in report["findings"]:
+        if finding.get("hidden_text") and (finding["rule"], finding["file"], finding["line"]) not in seen:
+            seen.add((finding["rule"], finding["file"], finding["line"]))
+            decoded += ["", f"**{finding['rule']} in `{finding['file']}:{finding['line']}` - {finding['title']}:**", "",
+                        "```", finding["hidden_text"], "```"]
+    if decoded:
+        lines += ["", "#### Decoded content"] + decoded
     fixes = []
     seen = set()
     for finding in report["findings"]:

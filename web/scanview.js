@@ -269,7 +269,9 @@
       const fileRows = report.files.filter((f) => f.verdict !== "PASS");
       const actions = h("div", { class: "row" }, [
         h("button", { type: "button", class: "small", text: "Download JSON report",
-          onclick: () => download("hexbane-report.json", JSON.stringify(report, null, 2), "application/json") }),
+          onclick: () => download("hexbane-report.json", JSON.stringify(
+            { ...report, findings: report.findings.map((f) => ({ ...f, fix_command: fixSnippet(f) })) }, null, 2),
+            "application/json") }),
         h("button", { type: "button", class: "small", text: "Copy as Markdown", onclick: () => {
           navigator.clipboard.writeText(toMarkdown(report)).then(() => toast("Copied."), () => toast("Copy failed."));
         } }),

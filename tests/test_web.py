@@ -62,6 +62,10 @@ for script in ("app.js", "engine.js", "store.js", "scan.js", "scanview.js"):
     dangerous = re.findall(r"\.(?:inner|outer)HTML\s*=|insertAdjacentHTML|document\.write|\beval\(", code)
     check(not dangerous, f"{script} inserts HTML or evals code: {dangerous}")
 
+# The web JSON report must carry each finding's fix command, like the CLI --format json output does.
+scanview_code = (WEB / "scanview.js").read_text(encoding="utf-8")
+check("fix_command" in scanview_code, "web JSON report must include the fix command per finding")
+
 # No third-party requests: the app must work offline and send nothing anywhere.
 # (Lines that build the Integrate page's code samples are display text, not requests.)
 for script in ("app.js", "engine.js", "store.js", "scan.js", "scanview.js", "index.html"):

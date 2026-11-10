@@ -80,3 +80,11 @@ Note: the archived judge outputs (docs/hone/v0.json to v3.json) have the product
   The statement matches the CSS breakpoints it describes.
 - Web "Copy as Markdown" report now includes the fix command per finding (parity with the CLI markdown report).
 - Version bumped 0.2.2 -> 0.2.3 (rules.json is the single source for `__version__`, web copy and Action pin).
+
+## Round 6 (v0.2.4): fix command in the JSON report (CLI + web)
+
+- The JSON report was the only export surface without the fix command (text, markdown, SARIF help and the web
+  Copy-as-Markdown all had it). `to_json` and the web "Download JSON report" now add `fix_command` to every
+  finding, so automation consuming the JSON gets the same ready-to-run command the page shows.
+- New CLI test: the JSON report must carry a non-empty, placeholder-free `fix_command` for every finding;
+  new hermetic check: the web JSON download must include it. Version bumped 0.2.3 -> 0.2.4.

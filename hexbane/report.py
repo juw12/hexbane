@@ -23,7 +23,9 @@ def filter_report(report: dict, min_severity: str) -> dict:
 
 
 def to_json(report: dict) -> str:
-    return json.dumps(report, indent=2, ensure_ascii=False) + "\n"
+    """Machine-readable report; every finding carries its ready-to-run fix command."""
+    enriched = {**report, "findings": [{**f, "fix_command": snippet_for(f)} for f in report["findings"]]}
+    return json.dumps(enriched, indent=2, ensure_ascii=False) + "\n"
 
 
 def to_text(report: dict) -> str:

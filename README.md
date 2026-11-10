@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: juw12/hexbane@v0.2.3
+      - uses: juw12/hexbane@v0.2.4
         with:
           path: .
           fail-on: high

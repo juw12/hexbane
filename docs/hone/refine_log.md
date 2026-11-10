@@ -30,7 +30,8 @@
 |---|---|---|---|---|---|---|
 | 2026-11-10 08:45 | v0 baseline: ScopeGuard playground as-is | n/a | 4.67 (Pega-Vision 6.6, Pega-Thinking 2.75; GLM failed) | not run | baseline | split on C1-C5 |
 | 2026-11-10 10:05 | v1 Gardu: scanner + rug-pull pin + tool gate + browser scan + Action + evaluation + Pages | G1-G8 pass (3/3 suites, parity 5/5, UI 11/11, held-out 15/16, self-scan PASS, live G8) | 9.5 (Pega-Vision 9.3, Pega-Thinking 9.7; GLM failed) | not run | kept | docs/hone/v1.json; fix ideas: decoded GD105 view, copyable fixes, mobile statement |
-| v2 | Rename to Hexbane, hex logo, disguised-text unfolding (HB106), decoded text in report, copy-paste fixes and suppressions, `hexbane fix`, disguised corpus (65) with before/after, phone screenshot, README as one story | G1, G2 (6 corpora), G3, G4, G5, G6, G7 pass; G8 after publish | see v2.json | see v2-pair.json | | |
+| 2026-11-10 13:10 | v2 Hexbane: rename + hex logo, disguised-text unfolding (HB106) with decoded text, copy-paste fixes and suppressions, `hexbane fix`, 65-sample disguised corpus (53 -> 63 flagged), README as one story | G1 3/3, G2 6/6 corpora, G3-G7 pass | 9.25 (3 judges: Vision 9.55, Thinking 9.25, GLM 9.25) | not run | kept (v1 9.5 had only 2 judges) | C5 median 8: phone tabs cut off, only dark screenshots |
+| 2026-11-10 13:30 | v3: phone nav as 3x2 grid (all six sections visible), light-theme and phone screenshots linked and judged | G1 3/3, G2 6/6, G8 live 200 | **9.85** (3 judges: C1-C4 median 10, C5 9) | v3 beats v1 (blind, order-swapped) | **kept, best** | docs/hone/v3.json, v3-pair.json |
 
 ## Round 2 (2026-11-10): user asked for a cooler, non-Indonesian name, a 10/10 attempt, and the weaknesses fixed
 
@@ -38,3 +39,7 @@
 - Assumed: repo renamed in place (juw12/gardu -> juw12/hexbane) so stars, issues and the old URL keep working through GitHub's redirect; Pages moves to /hexbane/ and a static redirect page keeps /gardu/ working.
 - Weaknesses targeted (from the v1 judges and the v1 README limits): disguised text slipped past plain patterns; fixes were prose, not copyable; no mobile evidence; README read as two merged tools.
 - Rubric unchanged (frozen); only the product name in its title changed.
+
+### Round 2 result
+
+Best: v3, 9.85 (all 3 judges answered, unlike v1). Not 10: C5 visual 9 from every judge. Open items the judges named: third-party malicious corpora (all labelled sets are author-written), uniform-spacing gap (8/14 rules), spaced command flags (m22), chat-gate numbers only in the app (about 1 in 5 clever off-topic requests get through), quoted-attack docs still flagged (5/273), WCAG AA audit of small dark-theme text, SRI for browser scripts.

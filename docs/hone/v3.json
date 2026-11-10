@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.3,
+    "C2": 0.25,
+    "C3": 0.15,
+    "C4": 0.15,
+    "C5": 0.15
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 9.0,
+        "C3": 10.0,
+        "C4": 10.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Measured results on real public samples are limited to false-positive rates on benign repos (anthropics/skills); true-positive detection is validated only on author-generated tuning/held-out sets.",
+        "C2": "Zero-install browser scan claims trust ('files are never uploaded') but lacks Subresource Integrity (SRI) hashes for scripts to verify code integrity during delivery.",
+        "C3": "One model where each part reinforces the other ('Breaks the hex before your AI agent falls for it' applies to load, call, and chat gates uniformly).",
+        "C4": "Tuning vs held-out vs public sets separated in docs/EVALUATION.md; false alarms explained ('False alarm: it tells the agent *never* to run'); limits stated plainly.",
+        "C5": "Clean, consistent themes and phone layout shown, but 'distinctive' branding is moderate and WCAG AA compliance for severity colors is not explicitly verified."
+      },
+      "fixes": [
+        "Augment detection metrics with third-party malicious corpora to validate efficacy beyond author-generated samples.",
+        "Implement Subresource Integrity (SRI) for browser scripts to harden the zero-install trust model.",
+        "Formalize WCAG AA compliance for UI colors and add a high-contrast theme option."
+      ],
+      "total": 9.3,
+      "seconds": 80.8
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 10.0,
+        "C2": 10.0,
+        "C3": 10.0,
+        "C4": 10.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "All 10-anchor elements present: runtime tool-call gate (`check-call`, `/v1/tool-call` with allow/ask/deny), rug-pull detection (`hexbane lock` + HB801-802), decoded hidden payloads shown to user (HB106 'hidden text: Ignore all previous instructions.'), and measured results on real public samples (anthropics/skills 273 files, modelcontextprotocol/servers 388 files, Invariant Labs PoCs 3/3 FAIL). 32 rules cover tool poisoning, hidden Unicode, cross-tool shadowing, exfiltration, remote-code pipes, risky MCP config.",
+        "C2": "Zero-install browser scan ('It runs in your browser; your files are never uploaded'), folder drop ('Drop a skill folder or files here' with 'Choose folder' button), samples ('Try a sample: Poisoned MCP tool, Skill with hidden text, Disguised instructions...'), CI-ready SARIF (`--format sarif --out hexbane.sarif`), GitHub Action (full action.yml with SARIF upload), copy-paste fixes ('hexbane fix csv-helper/NOTES.md --write'), and suppressions (`<!-- hexbane-ignore-next-line: HB401 (reviewed: why this is safe) -->`).",
+        "C3": "One brand (Hexbane, renamed from Gardu), shared navigation (Scan, Chat gate, Dashboard, Policy, Accuracy, Integrate), single story ('Breaks the hex before your agent falls for it'). README explicitly states coherence: 'They were merged because the same attack - instructions smuggled into text an AI reads - shows up at all three moments: when a tool is loaded, when it runs, and when a user types.' The 'stay in scope' idea is applied to both chat messages (chat gate) and skills/tools (load gate, call gate).",
+        "C4": "Tuning vs held-out vs public sets clearly separated in EVALUATION.md with distinct tables. False alarms explained with 'Fair?' column ('False alarm: it tells the agent never to run a page's setup scripts and quotes curl | sh as the bad example'). Limits stated plainly ('It is a pattern and structure scanner, not a model. Someone who knows the rules can paraphrase around them'). Sources linked (Invariant Labs, anthropics/skills, modelcontextprotocol/servers). Held-out miss reported honestly: 'h07-zed-config... got REVIEW instead of FAIL... Not tuned after the fact.'",
+        "C5": "Distinctive hex logo, calm security-tool look, clear hierarchy (numbered gates 1/2/3), severity colors visible (FAIL in red/pink, HIGH in orange), both themes clean and consistent. Phone view shows all six navigation items but wraps to two rows ('Scan, Chat gate, Dashboard' / 'Policy, Accuracy, Integrate'), consuming vertical space that could be better used with a hamburger menu or compact layout."
+      },
+      "fixes": [
+        "Improve chat gate accuracy: README states 'about 1 in 5 cleverly phrased off-topic requests still gets through' — this 20% failure rate on a core feature needs specific measured numbers and reduction, especially since the chat gate is one of the three unified gates in the product story.",
+        "Close the disguised-text gap for spaced-uniform and spaced variants: EVALUATION.md shows 'spaced-uniform' only recovers 8/14 rules and 'spaced' recovers 13/14 because word boundaries are lost; the README acknowledges 'letters spaced with the same gap as the words around them are only partly recovered'. Improving this would raise detection from 63/65 to closer to 65/65 on the obfuscated set.",
+        "Reduce false alarms on documentation that quotes attacks: 5 of 273 files in anthropics/skills are false alarms because they quote attacks to warn about them (e.g., 'skills/claude-api/shared/managed-agents-onboarding-from-url.md' FAIL on HB401). Better negation/context handling or a dedicated 'quoted-example' detector would lower the false-alarm rate below the current ~1.8%."
+      ],
+      "total": 9.85,
+      "seconds": 27.8
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 10.0,
+        "C2": 10.0,
+        "C3": 10.0,
+        "C4": 9.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "All four 10-anchor features present: 'Call gate | every tool call and tool result at run time' with allow/ask/deny; 'Rug-pull lock ... pins every file and tool description'; decoded payloads shown ('hidden text: Ignore all previous instructions.'); measured on real public samples (Invariant PoCs 3/3, anthropics/skills 273 files, MCP servers 388). All listed attack classes covered with 'why it matters' + fix per finding (e.g. HB401 'Downloads and runs code in one step' with fix text).",
+        "C2": "'paste or drop a SKILL.md ... It runs in your browser; your files are never uploaded' with 'Drop a skill folder or files here' and five one-click samples; CI-ready SARIF + GitHub Action ('Findings show up in Security > Code scanning'); 'copy-paste fix for that exact file and line' plus 'hexbane-ignore-next-line' suppressions and 'hexbane fix'.",
+        "C3": "One model, explicitly: 'the same attack ... shows up at all three moments: when a tool is loaded, when it runs, and when a user types'. Scope idea applied to both sides: HB701 'Skill does more than it says' for skills, chat gate 'keeps a business assistant on its mission'; the proxy runs all gates on one request ('off-mission messages are answered without calling the LLM, denied tool calls are dropped').",
+        "C4": "Tuning/held-out/public separated ('written after the rules were frozen, run once, and not tuned on'), every public alarm listed with a 'Fair?' verdict, blunt limits ('47 labelled samples written by one person are not a benchmark'), sources pinned by commit. Docked one point: the chat-gate number lives only 'in the app's Accuracy tab' with no documented, reproducible test set in the evaluation doc.",
+        "C5": "Distinctive calm security look (hex logo, dark navy, numbered gate cards, clear verdict-banner > findings hierarchy); both themes and phone screenshots attached with all six nav sections visible. Contrast unverified for small coloured text: red 'HEXBANE DECODED THE HIDDEN TEXT' caps on a dark tinted panel and grey secondary text look borderline for AA."
+      },
+      "fixes": [
+        "Close the known uniform-spacing bypass: spaced command flags still slip through ('the spaced flag letters merge into one word, so the upload pattern no longer matches'; spaced-uniform keeps only 8/14 rules) - add a spacing-aware matcher or treat uniform intra-word gaps as suspicious.",
+        "Document the chat-gate evaluation in docs/EVALUATION.md (test set, sample sizes, per-class results) so the 'about 1 in 5 cleverly phrased off-topic requests still gets through' claim is as reproducible as the scanner numbers.",
+        "Audit dark-theme colour contrast to WCAG AA for small text (the red 'HEXBANE DECODED THE HIDDEN TEXT' label and grey secondary copy), and consider severity escalation when an MCP config combines an unpinned package with an inline secret (h07 got REVIEW, not FAIL)."
+      ],
+      "total": 9.7,
+      "seconds": 191.1
+    }
+  },
+  "quorum": 3,
+  "council_score": 9.85,
+  "criterion_median": {
+    "C1": 10.0,
+    "C2": 10.0,
+    "C3": 10.0,
+    "C4": 10.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 1.0,
+    "C3": 0.0,
+    "C4": 1.0,
+    "C5": 0.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    9.3,
+    9.85
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Augment detection metrics with third-party malicious corpora to validate efficacy beyond author-generated samples."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Implement Subresource Integrity (SRI) for browser scripts to harden the zero-install trust model."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Formalize WCAG AA compliance for UI colors and add a high-contrast theme option."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Improve chat gate accuracy: README states 'about 1 in 5 cleverly phrased off-topic requests still gets through' — this 20% failure rate on a core feature needs specific measured numbers and reduction, especially since the chat gate is one of the three unified gates in the product story."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Close the disguised-text gap for spaced-uniform and spaced variants: EVALUATION.md shows 'spaced-uniform' only recovers 8/14 rules and 'spaced' recovers 13/14 because word boundaries are lost; the README acknowledges 'letters spaced with the same gap as the words around them are only partly recovered'. Improving this would raise detection from 63/65 to closer to 65/65 on the obfuscated set."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Reduce false alarms on documentation that quotes attacks: 5 of 273 files in anthropics/skills are false alarms because they quote attacks to warn about them (e.g., 'skills/claude-api/shared/managed-agents-onboarding-from-url.md' FAIL on HB401). Better negation/context handling or a dedicated 'quoted-example' detector would lower the false-alarm rate below the current ~1.8%."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Close the known uniform-spacing bypass: spaced command flags still slip through ('the spaced flag letters merge into one word, so the upload pattern no longer matches'; spaced-uniform keeps only 8/14 rules) - add a spacing-aware matcher or treat uniform intra-word gaps as suspicious."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Document the chat-gate evaluation in docs/EVALUATION.md (test set, sample sizes, per-class results) so the 'about 1 in 5 cleverly phrased off-topic requests still gets through' claim is as reproducible as the scanner numbers."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Audit dark-theme colour contrast to WCAG AA for small text (the red 'HEXBANE DECODED THE HIDDEN TEXT' label and grey secondary copy), and consider severity escalation when an MCP config combines an unpinned package with an inline secret (h07 got REVIEW, not FAIL)."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

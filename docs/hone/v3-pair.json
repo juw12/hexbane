@@ -1,0 +1,51 @@
+{
+  "mode": "pair",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "judges": {
+    "Pega-Vision": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Version 2 explicitly satisfies the level 10 criteria for Security Depth (displaying decoded hidden payloads in reports), Usability (copy-paste fixes and autofix command), and Visual Quality (phone screenshots and light/dark themes), whereas Version 1 lacks explicit evidence for these specific features. Version 2 also provides more rigorous evidence with the added 'Disguised set' evaluation and honest limits on unfolding effectiveness.",
+        "Version 1 demonstrates superior Security Depth (C1) and Evidence (C4) by displaying decoded hidden payloads and evaluating against a disguised-attack corpus, features absent in Version 2. It also better fulfills Usability (C2) and Visual Quality (C5) requirements through an autofix command and explicit mobile responsiveness evidence."
+      ]
+    },
+    "Pega-Thinking": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "VERSION 2 (Hexbane) is stronger across all soft criteria: it adds a disguised-text unfolding pass (HB106) with measured before/after numbers on a new obfuscated corpus, shows decoded hidden text to the user, provides copy-paste fixes and an autofix command, and ships light-theme and phone screenshots with all six navigation sections visible. VERSION 1 lacks these depth, UX, and visual improvements.",
+        "VERSION 1 (Hexbane) is stronger across all soft criteria: it adds the disguised-text unfolding pass with decoded payloads shown to the user (C1), an autofix command and richer copy-paste fixes/suppressions (C2), a more unified 'hex' brand story (C3), a disguised-attack corpus with before/after numbers (C4), and phone + light-theme screenshots demonstrating responsive UI (C5)."
+      ]
+    },
+    "GLM-5.3-Flash": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Version 2 keeps all of Version 1's gates, corpora and honest evaluation while adding the rubric's top-anchor items Version 1 lacks: decoded hidden payloads shown to the user (HB106 unfolding, in CLI and browser), per-finding copy-paste fixes/suppressions plus autofix, an adversarial disguised-text corpus with before/after numbers and candid gap reporting, and demonstrated light-theme/phone UI. The only trade-off is a slower scan, which is honestly disclosed, so V2 scores higher on C1, C2 and C5 with no rubric regressions.",
+        "Version 1 reaches the rubric's top bands on the weighted criteria: it adds the unfolding pass with decoded hidden payloads shown to users (C1=10), copy-paste fixes/suppressions plus `fix` autofix and demonstrated folder-drop samples (C2=10), a disguised-attack corpus with before/after numbers and plainer limits (C4), and evidenced light/phone UI (C5), while Version 2 lacks decoded-payload display and per-finding fixes and shows only one desktop screenshot. Both share the same coherent three-gate story (C3 roughly tied), so Version 1 wins overall."
+      ]
+    }
+  },
+  "votes": {
+    "A": 0,
+    "B": 3,
+    "tie": 0
+  },
+  "quorum": 3,
+  "b_wins": true,
+  "label": "council-judged (3 judges)"
+}

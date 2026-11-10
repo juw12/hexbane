@@ -12,6 +12,8 @@ tool list or a whole skill folder. It runs in your browser; your files are never
 
 ![Hexbane decoding disguised instructions in a skill](docs/screenshots/scan-disguised-dark.png)
 
+Also in [light theme](docs/screenshots/scan-fail-light.png) and [on a phone](docs/screenshots/scan-phone.png).
+
 ## What it does
 
 | | When | What it stops |

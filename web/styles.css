@@ -736,3 +736,21 @@ a.gate:hover { border-color: var(--accent); }
   .copy-block pre { padding-right: .7rem; padding-bottom: 2.6rem; }
   .copy-block .copy-btn { top: auto; bottom: .4rem; }
 }
+
+/* Phones: show every section at once (3 x 2 grid) instead of a sideways-scrolling strip that looks cut off. */
+@media (max-width: 640px) {
+  .topbar .tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    overflow-x: visible;
+    width: 100%;
+  }
+  .topbar .tabs a {
+    text-align: center;
+    padding: 8px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

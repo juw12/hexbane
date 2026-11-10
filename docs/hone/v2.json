@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.3,
+    "C2": 0.25,
+    "C3": 0.15,
+    "C4": 0.15,
+    "C5": 0.15
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 10.0,
+        "C3": 10.0,
+        "C4": 10.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Uniform spacing gaps only partly recovered (8/14 rules); admits 'novel attack with no known pattern will PASS'.",
+        "C2": "Zero-install browser scan with folder drop, GitHub Action, SARIF, copy-paste fixes and suppressions.",
+        "C3": "One model reinforcing 'stay in scope' across Load, Call, and Chat gates; shared navigation and brand.",
+        "C4": "Tuning vs held-out vs public sets separated; false alarms explained; limits stated plainly; sources linked.",
+        "C5": "Mobile navigation truncates 'Accuracy' to 'Accur'; otherwise distinctive, calm security-tool look."
+      },
+      "fixes": [
+        "Improve unfolding pass to recover uniform spacing gaps (currently 8/14 rules detected).",
+        "Reduce false positives on documentation quoting attacks (5 false alarms in benign anthropics/skills corpus).",
+        "Fix mobile navigation layout to prevent tab label truncation (e.g. 'Accur')."
+      ],
+      "total": 9.55,
+      "seconds": 54.1
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 10.0,
+        "C3": 9.0,
+        "C4": 10.0,
+        "C5": 8.0
+      },
+      "evidence": {
+        "C1": "Covers all main attack classes (HB101-106 hidden content, HB201-206 injection, HB301/310/311 secrets, HB401-405 execution/exfil, HB501-506 MCP config, HB601-603 tool manifest, HB701 scope, HB801-802 lock); runtime tool-call gate via `check-call`/`check-output`; rug-pull pinning via `hexbane lock`; decoded payloads shown ('hidden text: Ignore all previous instructions.'); measured on Invariant Labs PoCs (3/3 FAIL), anthropics/skills (273 files), MCP servers (388 files). Minor gaps: chat gate 'about 1 in 5 cleverly phrased off-topic requests still gets through' and disguise misses on uniform spacing.",
+        "C2": "Zero-install browser scan ('It runs in your browser; your files are never uploaded'); folder drop with 'Choose folder'/'Choose files'; samples ('Poisoned MCP tool', 'Skill with hidden text', 'Disguised instructions', 'Risky MCP config', 'Clean skill'); SARIF output (`--format sarif`); full GitHub Action with `action.yml`; copy-paste fixes per finding; suppressions via `<!-- hexbane-ignore-next-line: HB401 -->`; phone screenshot included; autofix via `hexbane fix`.",
+        "C3": "Single brand Hexbane with hex logo; shared navigation (Scan, Chat gate, Dashboard, Policy, Accuracy, Integrate); unified story ('Breaks the hex before your AI agent falls for it'); three gates (load/call/chat) unified under one model; shared `rules.json` across CLI/server/browser; OpenAI-compatible proxy combines all gates; Background section explicitly explains the merge: 'the same attack - instructions smuggled into text an AI reads - shows up at all three moments'.",
+        "C4": "Tuning (31), held-out (16), disguised (65), and public sets (273 skills, 388 servers, 3 Invariant PoCs) clearly separated; false alarms individually explained ('False alarm: it tells the agent *never* to run a page's setup scripts and quotes `curl ... | sh` as the bad example'); held-out miss reported honestly ('h07-zed-config... got REVIEW instead of FAIL - left as is, not tuned'); limits stated plainly ('It is a pattern and structure scanner, not a model'); sources linked (Invariant Labs, anthropics/skills, MCP servers); speed measurements included; 'Working prototype by one developer. Not audited.'",
+        "C5": "Distinctive hex logo and dark security-tool aesthetic; clear hierarchy with numbered gates (1, 2, 3); severity colors visible (HIGH in red/orange); 'HEXBANE DECODED THE HIDDEN TEXT' callout for disguised text; phone screenshot shows mobile layout works. Cannot verify light theme readability - all provided screenshots are dark-only, and rubric level 7 requires 'readable in both themes'."
+      },
+      "fixes": [
+        "Improve chat gate accuracy: README admits 'about 1 in 5 cleverly phrased off-topic requests still gets through' - this is the weakest measured number and undermines the unified 'stay in scope' story.",
+        "Close disguise-handling gaps: uniform spacing only partly recovered (8/14 rules) and spaced command flags slip through (m22-file-upload misses both versions) - the unfolding pass is the headline v2 feature and still has measurable holes.",
+        "Add and verify a light theme: all provided screenshots are dark-only; rubric level 7 requires readability in both themes, and a security tool used in code-review contexts will be viewed in light mode by many developers."
+      ],
+      "total": 9.25,
+      "seconds": 17.3
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.5,
+        "C2": 10.0,
+        "C3": 9.0,
+        "C4": 9.5,
+        "C5": 7.5
+      },
+      "evidence": {
+        "C1": "All four 10-anchor pieces present: 'Call gate | every tool call and tool result at run time | allow/ask/deny', 'hexbane lock ... flags anything that changed (rug pull)', decoded payload shown ('hidden text: Ignore all previous instructions.'), and measured public-sample results (3/3 Invariant PoCs, 273+388-file scans with per-file alarm review). Docked because the runtime half is unmeasured: call gate has no numbers and the chat-gate figure lives only 'in the app's Accuracy tab'.",
+        "C2": "Every 10-anchor item evidenced: zero-install browser scan ('paste or drop a SKILL.md ... It runs in your browser; your files are never uploaded') with folder drop and 5 samples; SARIF ('--format sarif') plus a full composite action.yml; 'copy-paste fix for that exact file and line' with suppression syntax and browser 'False alarm? Mark it as reviewed'.",
+        "C3": "One brand and one model: 'the same attack ... shows up at all three moments: when a tool is loaded, when it runs, and when a user types'; UI numbers the gates 1-2-3; 'stay in scope' applied to skills (HB701 'Skill does more than it says') and chat ('keeps a business assistant on its mission'). Docked: chat-gate heuristics sit outside the 32 shared rules and the Policy tab is never explained.",
+        "C4": "Exemplary separation: tuning (31, 'rules were tuned on it') vs held-out (16, 'run once') vs public folders; 'Every non-PASS file is listed' with fair/unfair verdicts; blunt limits ('not a benchmark', 'Not audited', paraphrase gap); pinned sources (@7382a5e, @2c5958e). Docked: chat-gate accuracy (~1 in 5 bypass) referenced to the app tab rather than tabulated with sample sizes.",
+        "C5": "Desktop dark UI is clean and hierarchical (FAIL banner, HIGH chips, decoded-text callout, why/fix structure), but both phone screenshots truncate the nav at 'Accur', no light theme is shown, and the small red decoded-text callout's contrast is unverified."
+      },
+      "fixes": [
+        "Fix the phone layout: the top nav is cut off at 'Accur' in both mobile screenshots (wrap or collapse it), and publish light-theme screenshots with contrast-checked severity colours to evidence the 10 anchor.",
+        "Add measured runtime-gate numbers with sample sizes to docs/EVALUATION.md - the call gate has no published deny/quarantine rate and the chat-gate '~1 in 5' bypass figure lives only in the app's Accuracy tab.",
+        "Fold the chat-gate heuristics into the shared rules.json (or explain the split) and document the Policy tab in the README so load/call/chat read as one rule system rather than scanner plus bolted-on gate."
+      ],
+      "total": 9.25,
+      "seconds": 59.3
+    }
+  },
+  "quorum": 3,
+  "council_score": 9.25,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 10.0,
+    "C3": 9.0,
+    "C4": 10.0,
+    "C5": 8.0
+  },
+  "criterion_spread": {
+    "C1": 0.5,
+    "C2": 0.0,
+    "C3": 1.0,
+    "C4": 0.5,
+    "C5": 1.5
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    9.25,
+    9.55
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Improve unfolding pass to recover uniform spacing gaps (currently 8/14 rules detected)."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Reduce false positives on documentation quoting attacks (5 false alarms in benign anthropics/skills corpus)."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Fix mobile navigation layout to prevent tab label truncation (e.g. 'Accur')."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Improve chat gate accuracy: README admits 'about 1 in 5 cleverly phrased off-topic requests still gets through' - this is the weakest measured number and undermines the unified 'stay in scope' story."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Close disguise-handling gaps: uniform spacing only partly recovered (8/14 rules) and spaced command flags slip through (m22-file-upload misses both versions) - the unfolding pass is the headline v2 feature and still has measurable holes."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Add and verify a light theme: all provided screenshots are dark-only; rubric level 7 requires readability in both themes, and a security tool used in code-review contexts will be viewed in light mode by many developers."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Fix the phone layout: the top nav is cut off at 'Accur' in both mobile screenshots (wrap or collapse it), and publish light-theme screenshots with contrast-checked severity colours to evidence the 10 anchor."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Add measured runtime-gate numbers with sample sizes to docs/EVALUATION.md - the call gate has no published deny/quarantine rate and the chat-gate '~1 in 5' bypass figure lives only in the app's Accuracy tab."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Fold the chat-gate heuristics into the shared rules.json (or explain the split) and document the Policy tab in the README so load/call/chat read as one rule system rather than scanner plus bolted-on gate."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

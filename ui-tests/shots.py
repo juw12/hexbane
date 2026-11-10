@@ -1,6 +1,6 @@
 """Screenshots of the Scan page (and console-error check) in headless Edge.
 
-    python ui-tests/shots.py [out_dir]     -> scan-empty-dark.png, scan-fail-dark.png, scan-fail-light.png, scan-phone.png
+    python ui-tests/shots.py [out_dir]     -> scan-empty-dark.png, scan-fail-dark.png, scan-fail-light.png, scan-disguised-dark.png, scan-phone.png
 Exit 1 if the page logs a JavaScript error.
 """
 
@@ -17,8 +17,8 @@ OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "docs" / "screenshots"
 
 
 def launch_options() -> dict:
-    """Edge locally (Windows); plain Playwright Chromium in CI (GARDU_BROWSER=chromium)."""
-    if os.environ.get("GARDU_BROWSER", "msedge") == "chromium":
+    """Edge locally (Windows); plain Playwright Chromium in CI (HEXBANE_BROWSER=chromium)."""
+    if os.environ.get("HEXBANE_BROWSER", "msedge") == "chromium":
         return {"headless": True}
     return {"channel": "msedge", "headless": True}
 
@@ -49,6 +49,11 @@ def main() -> int:
             page.click('button[data-sample="poisoned"]')
             page.wait_for_selector("#scan-verdict")
             page.screenshot(path=str(OUT / f"scan-fail-{theme}.png"), full_page=True)
+            if theme == "dark":
+                # Disguised text: the decoded instruction and the copyable fix are shown.
+                page.click('button[data-sample="disguised"]')
+                page.wait_for_selector("text=Disguised text")
+                page.screenshot(path=str(OUT / "scan-disguised-dark.png"), full_page=True)
             page.close()
         phone = browser.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2, color_scheme="dark")
         phone.on("pageerror", lambda e: errors.append(str(e)))

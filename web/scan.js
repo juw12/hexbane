@@ -1,4 +1,4 @@
-/* Gardu browser scanner: a line-for-line port of gardu/scanner.py using the same rules.json.
+/* Hexbane browser scanner: a line-for-line port of hexbane/scanner.py using the same rules.json.
    The UI test suite runs both on the whole corpus and requires identical findings (rule, file, line). */
 (function (global) {
   "use strict";
@@ -38,6 +38,9 @@
     R.negationRe = new RegExp(R.negation_words, "i");
     R.invisibleSet = new Set(R.invisible);
     R.bidiSet = new Set(R.bidi);
+    R.foldRules = new Set(R.fold_rules || []);
+    const confusableKeys = Object.keys(R.confusables || {}).join("");
+    R.confusableRe = confusableKeys ? new RegExp("[" + confusableKeys + "]", "g") : null;
     return R;
   }
 
@@ -180,10 +183,10 @@
       for (const number of [line, line - 1]) {
         if (number > 0 && number <= this.lines.length) {
           const content = this.lines[number - 1];
-          const marker = content.indexOf("gardu-ignore");
+          const marker = content.indexOf("hexbane-ignore");
           if (marker === -1) continue;
-          if (number === line - 1 && content.indexOf("gardu-ignore-next-line") === -1) continue;
-          const ids = content.slice(marker).match(/GD\d{3}/g) || [];
+          if (number === line - 1 && content.indexOf("hexbane-ignore-next-line") === -1) continue;
+          const ids = content.slice(marker).match(/HB\d{3}/g) || [];
           if (!ids.length || ids.includes(ruleId)) return true;
         }
       }
@@ -221,7 +224,7 @@
           const line = lineOffset !== undefined && lineOffset !== null ? lineOffset : lineOf(text, match.index);
           let evidence = null;
           if (rule.mask) {
-            if (rule.id === "GD311") {
+            if (rule.id === "HB311") {
               const m = match[0];
               const raw = m.slice(m.search(/[:=]/) + 1).trim();
               const quoted = raw.slice(0, 1) === "\"" || raw.slice(0, 1) === "'";
@@ -235,6 +238,105 @@
           const severity = lineOffset !== undefined && lineOffset !== null
             ? severityFor(rule, scan.kind) : contextSeverity(rule, scan.kind, text, match.index);
           scan.add(rule.id, line, { evidence, hidden: hiddenSource, severity });
+        }
+      }
+    }
+  }
+
+  // ------------------------------------------------------------ disguised text (fold pass)
+  const FOLD_ENTITY = /&#(\d{2,5});|&#[xX]([0-9a-fA-F]{2,5});/g;
+  const FOLD_STEPS = [
+    [/(?<=[A-Za-z])(\*{1,2}|~~|`)(?=[A-Za-z])/g, ""],
+    [/(?<=[A-Za-z])(''|"")(?=[A-Za-z])/g, ""],
+    [/(?<![A-Za-z] )(?<![A-Za-z])[A-Za-z](?: [A-Za-z])+(?![A-Za-z])(?! [A-Za-z](?![A-Za-z]))/g, "SPACED"],
+  ];
+  const FOLD_NEWLINE = /(?<=[^\n])\n(?=[^\n])/g;
+  const FOLD_GAPS = /(?<=\S)[ \t]{2,}(?=\S)/g;
+
+  // Keep, for every output character, the index of the input character it came from (so findings keep their
+  // line numbers) and whether it was produced by undoing a disguise. Mirrors fold_sub in hexbane/scanner.py.
+  function foldSub(text, source, disguised, pattern, replace, mark) {
+    if (mark === undefined) mark = true;
+    let out = "";
+    const outSource = [];
+    const outDisguised = [];
+    let cursor = 0;
+    pattern.lastIndex = 0;
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      if (match[0].length === 0) { pattern.lastIndex++; continue; }
+      const start = match.index;
+      const end = start + match[0].length;
+      out += text.slice(cursor, start);
+      for (let i = cursor; i < start; i++) { outSource.push(source[i]); outDisguised.push(disguised[i]); }
+      const replacement = replace(match);
+      const anchor = source[start];
+      out += replacement;
+      for (let i = 0; i < replacement.length; i++) { outSource.push(anchor); outDisguised.push(mark); }
+      if (mark && !replacement && end < text.length) disguised = disguised.slice(0, end).concat([true], disguised.slice(end + 1));
+      cursor = end;
+    }
+    out += text.slice(cursor);
+    for (let i = cursor; i < text.length; i++) { outSource.push(source[i]); outDisguised.push(disguised[i]); }
+    return [out, outSource, outDisguised];
+  }
+
+  function entityChar(match) {
+    const code = match[1] !== undefined ? parseInt(match[1], 10) : parseInt(match[2], 16);
+    return code >= 32 && code < 0x110000 ? String.fromCodePoint(code) : match[0];
+  }
+
+  function fold(clean) {
+    let text = R.confusableRe ? clean.replace(R.confusableRe, (ch) => R.confusables[ch]) : clean;
+    let disguised = [];
+    for (let i = 0; i < text.length; i++) disguised.push(text[i] !== clean[i]);
+    let source = [];
+    for (let i = 0; i < text.length; i++) source.push(i);
+    [text, source, disguised] = foldSub(text, source, disguised, FOLD_ENTITY, entityChar);
+    for (const [pattern, replacement] of FOLD_STEPS) {
+      const replace = replacement === "SPACED" ? (m) => m[0].replace(/ /g, "") : () => replacement;
+      [text, source, disguised] = foldSub(text, source, disguised, pattern, replace);
+    }
+    [text, source, disguised] = foldSub(text, source, disguised, FOLD_GAPS, () => " ", false);
+    const joined = text.replace(FOLD_NEWLINE, " ");
+    if (joined === clean) return null;
+    return [joined, source, disguised];
+  }
+
+  // Decoded text for a folded match, limited to the original line(s) the match came from.
+  function foldWindow(text, source, clean, start, end) {
+    const origin = source[start];
+    const firstLineStart = origin > 0 ? clean.lastIndexOf("\n", origin - 1) + 1 : 0;
+    let lineEnd = clean.indexOf("\n", source[end - 1]);
+    if (lineEnd === -1) lineEnd = clean.length;
+    let left = start;
+    while (left > 0 && start - left < 80 && source[left - 1] >= firstLineStart) left--;
+    let right = end;
+    while (right < text.length && right - end < 80 && source[right] < lineEnd) right++;
+    return squash(text.slice(left, right)).slice(0, 300);
+  }
+
+  function scanFolded(scan, clean) {
+    const folded = fold(clean);
+    if (!folded) return;
+    const [text, source, disguised] = folded;
+    if (scan.kind === "code" && !disguised.some(Boolean)) return; // only wrapping or spacing changed
+    for (const rule of R.rules) {
+      if (!R.foldRules.has(rule.id) || !rule.compiled.length || !applies(rule, scan.kind)) continue;
+      for (const pattern of rule.compiled) {
+        pattern.lastIndex = 0;
+        let match;
+        while ((match = pattern.exec(text)) !== null) {
+          if (match[0].length === 0) { pattern.lastIndex++; continue; }
+          const start = match.index;
+          const end = start + match[0].length;
+          const origin = source[start];
+          const line = lineOf(clean, origin);
+          if (scan.seen.has(rule.id + "|" + line + "|")) continue;
+          const snippet = foldWindow(text, source, clean, start, end);
+          const severity = contextSeverity(rule, scan.kind, clean, origin);
+          scan.add(rule.id, line, { hidden: snippet, severity });
+          if (disguised.slice(start, end).some(Boolean)) scan.add("HB106", line, { hidden: snippet });
         }
       }
     }
@@ -261,13 +363,13 @@
         let end = i;
         while (end < chars.length && isTag(chars[end].codePointAt(0))) end++;
         const hidden = decodeTags(chars.slice(i, end));
-        scan.add("GD103", line, { hidden: hidden.slice(0, 300) || null });
+        scan.add("HB103", line, { hidden: hidden.slice(0, 300) || null });
         if (hidden) scanPatterns(scan, hidden, line, hidden.slice(0, 300));
         i = end;
         continue;
       }
-      if (R.bidiSet.has(code)) scan.add("GD102", line);
-      else if (R.invisibleSet.has(code) && !legitJoiner(chars, i)) scan.add("GD101", line, { severity: invisibleSeverity(scan.kind, chars, i) });
+      if (R.bidiSet.has(code)) scan.add("HB102", line);
+      else if (R.invisibleSet.has(code) && !legitJoiner(chars, i)) scan.add("HB101", line, { severity: invisibleSeverity(scan.kind, chars, i) });
       i++;
     }
   }
@@ -280,7 +382,7 @@
       const body = match[1];
       if (body.trim().length < 20) continue;
       if (R.commentAiRe.test(body) && R.commentOrderRe.test(body)) {
-        scan.add("GD104", lineOf(clean, match.index), { hidden: squash(body).slice(0, 300) });
+        scan.add("HB104", lineOf(clean, match.index), { hidden: squash(body).slice(0, 300) });
       }
     }
   }
@@ -303,7 +405,7 @@
       const before = scan.findings.length;
       scanPatterns(scan, decoded, line, squash(decoded).slice(0, 300));
       const severity = scan.findings.length > before ? "high" : null;
-      scan.add("GD105", line, { hidden: squash(decoded).slice(0, 300), severity });
+      scan.add("HB105", line, { hidden: squash(decoded).slice(0, 300), severity });
     }
   }
 
@@ -332,18 +434,18 @@
       for (const f of decodedScan.findings) {
         scan.add(f.rule, line, { evidence: "tool '" + name + "': " + f.evidence, hidden: f.hidden_text, severity: f.severity });
       }
-      if (description.length > 1200) scan.add("GD601", line, { evidence: "tool '" + name + "': description is " + description.length + " characters" });
+      if (description.length > 1200) scan.add("HB601", line, { evidence: "tool '" + name + "': description is " + description.length + " characters" });
       for (const [key, value] of Object.entries(properties)) {
         if (R.side_channel_params.includes(key.toLowerCase())) {
           const paramDescription = isDict(value) ? (value.description || "") : "";
           if (R.sideChannelRe.test(description + " " + paramDescription)) {
-            scan.add("GD602", line, { evidence: "tool '" + name + "': parameter '" + key + "'", extraKey: key });
+            scan.add("HB602", line, { evidence: "tool '" + name + "': parameter '" + key + "'", extraKey: key });
           }
         }
       }
       for (const other of names) {
         if (other !== name && other.length >= 4 && new RegExp("(?<![\\w-])" + escapeRe(other) + "(?![\\w-])").test(description)) {
-          scan.add("GD603", line, { evidence: "tool '" + name + "' mentions tool '" + other + "'", extraKey: other });
+          scan.add("HB603", line, { evidence: "tool '" + name + "' mentions tool '" + other + "'", extraKey: other });
         }
       }
     }
@@ -394,11 +496,11 @@
       const base = basename(command).toLowerCase();
       const runner = base.replace(".cmd", "").replace(".exe", "");
       const spec = packageSpec(command, args);
-      if (spec !== null && !isPinned(spec, runner)) scan.add("GD501", line, { evidence: "server '" + name + "': " + runner + " " + spec, extraKey: name });
+      if (spec !== null && !isPinned(spec, runner)) scan.add("HB501", line, { evidence: "server '" + name + "': " + runner + " " + spec, extraKey: name });
       const filesystemLike = name.toLowerCase().includes("filesystem") || args.some((a) => a.toLowerCase().includes("filesystem"));
       for (const arg of args) {
         if (isBroadRoot(arg)) {
-          scan.add("GD502", line, { evidence: "server '" + name + "': gets '" + arg + "'", severity: filesystemLike ? "high" : null, extraKey: name });
+          scan.add("HB502", line, { evidence: "server '" + name + "': gets '" + arg + "'", severity: filesystemLike ? "high" : null, extraKey: name });
           break;
         }
       }
@@ -406,7 +508,7 @@
       if (url.toLowerCase().startsWith("http://")) {
         const host = url.replace(/^http:\/\//i, "").split("/")[0].split(":")[0].toLowerCase();
         if (!["localhost", "127.0.0.1", "::1", "[::1]", "0.0.0.0"].includes(host) && !host.endsWith(".localhost")) {
-          scan.add("GD503", line, { evidence: "server '" + name + "': " + url, extraKey: name });
+          scan.add("HB503", line, { evidence: "server '" + name + "': " + url, extraKey: name });
         }
       }
       for (const blockName of ["env", "headers"]) {
@@ -417,16 +519,16 @@
           if (!SECRET_KEY.test(key) || !value.trim()) continue;
           if (ENV_REFERENCE.test(value) || isPlaceholder(value) || value.trim().length < 8) continue;
           if (value.toLowerCase().startsWith("bearer ") && ENV_REFERENCE.test(value.slice(7))) continue;
-          scan.add("GD504", line, { evidence: "server '" + name + "': " + blockName + "." + key + " = " + maskSecret(value), extraKey: name + "." + key });
+          scan.add("HB504", line, { evidence: "server '" + name + "': " + blockName + "." + key + " = " + maskSecret(value), extraKey: name + "." + key });
         }
       }
       if (SHELLS.includes(base) && args.some((a) => ["-c", "/c", "-command", "/k", "-encodedcommand", "-e"].includes(a.toLowerCase()))) {
-        scan.add("GD505", line, { evidence: "server '" + name + "': " + command + " " + args.join(" ").slice(0, 120), extraKey: name });
+        scan.add("HB505", line, { evidence: "server '" + name + "': " + command + " " + args.join(" ").slice(0, 120), extraKey: name });
       }
       if (runner === "docker") {
         const joined = args.join(" ");
         if (/--privileged|docker\.sock|(-v|--volume)[ =]\/:|--pid[ =]host|--network[ =]host/.test(joined)) {
-          scan.add("GD506", line, { evidence: "server '" + name + "': docker " + joined.slice(0, 120), extraKey: name });
+          scan.add("HB506", line, { evidence: "server '" + name + "': docker " + joined.slice(0, 120), extraKey: name });
         }
       }
     }
@@ -439,7 +541,7 @@
     let match;
     while ((match = re.exec(clean)) !== null) {
       const params = match[2].match(/\b(sidenote|side_note)\b/i);
-      if (params) scan.add("GD602", lineOf(clean, match.index), { extraKey: params[0] });
+      if (params) scan.add("HB602", lineOf(clean, match.index), { extraKey: params[0] });
     }
   }
 
@@ -450,6 +552,7 @@
     scanHiddenChars(scan);
     const clean = stripHidden(text);
     scanPatterns(scan, clean);
+    scanFolded(scan, clean);
     scanComments(scan, clean);
     scanBase64(scan, clean);
     scanCodeTools(scan, clean);
@@ -490,10 +593,10 @@
       }
     }
     if (!undeclared.length) return [];
-    const rule = R.byId.GD701;
+    const rule = R.byId.HB701;
     const severity = undeclared.some(([k]) => k === "credentials" || k === "persistence") ? "high" : rule.severity;
     const parts = undeclared.map(([k, p, l]) => R.capabilities[k].label + " (" + basename(p) + ":" + l + ")");
-    return [{ rule: "GD701", severity, title: rule.title, file: skillPath, line: 1,
+    return [{ rule: "HB701", severity, title: rule.title, file: skillPath, line: 1,
       evidence: "description never mentions: " + parts.join("; "), why: rule.why, fix: rule.fix,
       hidden_text: null, refs: (rule.refs || []).slice() }];
   }
@@ -542,9 +645,9 @@
     for (const row of fileRows) row.verdict = verdictFor(perFile[row.path] || "info");
     const worst = findings.reduce((m, f) => Math.max(m, SEVERITY_ORDER[f.severity]), 0);
     const worstName = Object.keys(SEVERITY_ORDER).find((k) => SEVERITY_ORDER[k] === worst);
-    return { tool: "gardu", version: R.version, verdict: verdictFor(worstName), counts,
+    return { tool: "hexbane", version: R.version, verdict: verdictFor(worstName), counts,
       files_scanned: fileRows.length, files: fileRows, skipped: skipped || [], findings };
   }
 
-  global.GarduScan = { loadRules, scanFiles, scanText, stripHidden, verdictFor, get rules() { return R; } };
+  global.HexbaneScan = { loadRules, scanFiles, scanText, stripHidden, verdictFor, get rules() { return R; } };
 })(typeof window !== "undefined" ? window : globalThis);

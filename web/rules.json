@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "invisible": [
     8203,
     8204,
@@ -22,6 +22,75 @@
     8295,
     8296,
     8297
+  ],
+  "confusables": {
+    "\u0430": "a",
+    "\u0435": "e",
+    "\u043e": "o",
+    "\u0440": "p",
+    "\u0441": "c",
+    "\u0445": "x",
+    "\u0443": "y",
+    "\u0456": "i",
+    "\u0458": "j",
+    "\u0455": "s",
+    "\u0501": "d",
+    "\u04bb": "h",
+    "\u0475": "v",
+    "\u051b": "q",
+    "\u0410": "A",
+    "\u0412": "B",
+    "\u0415": "E",
+    "\u041a": "K",
+    "\u041c": "M",
+    "\u041d": "H",
+    "\u041e": "O",
+    "\u0420": "P",
+    "\u0421": "C",
+    "\u0422": "T",
+    "\u0425": "X",
+    "\u0406": "I",
+    "\u0408": "J",
+    "\u0405": "S",
+    "\u0423": "Y",
+    "\u03bf": "o",
+    "\u03b1": "a",
+    "\u03b5": "e",
+    "\u03b9": "i",
+    "\u03ba": "k",
+    "\u03bd": "v",
+    "\u03c1": "p",
+    "\u03c4": "t",
+    "\u03c5": "u",
+    "\u03c7": "x",
+    "\u0391": "A",
+    "\u0392": "B",
+    "\u0395": "E",
+    "\u0396": "Z",
+    "\u0397": "H",
+    "\u0399": "I",
+    "\u039a": "K",
+    "\u039c": "M",
+    "\u039d": "N",
+    "\u039f": "O",
+    "\u03a1": "P",
+    "\u03a4": "T",
+    "\u03a5": "Y",
+    "\u03a7": "X"
+  },
+  "fold_rules": [
+    "HB201",
+    "HB202",
+    "HB203",
+    "HB204",
+    "HB205",
+    "HB206",
+    "HB301",
+    "HB401",
+    "HB402",
+    "HB403",
+    "HB404",
+    "HB405"
   ],
   "placeholder_words": [
     "your",
@@ -78,7 +147,7 @@
   "comment_order_words": "\\b(must|should|always|never|do\\s+not|don't|ignore|instead|make\\s+sure|remember\\s+to)\\b",
   "rules": [
     {
-      "id": "GD101",
+      "id": "HB101",
       "severity": "high",
       "category": "hidden",
       "title": "Invisible characters",
@@ -86,10 +155,11 @@
       "fix": "Delete the invisible characters (the evidence shows where they are) and re-review the text.",
       "refs": [
         "https://embracethered.com/blog/posts/2024/hiding-and-finding-text-with-unicode-tags/"
-      ]
+      ],
+      "snippet": "hexbane fix {file} --write"
     },
     {
-      "id": "GD102",
+      "id": "HB102",
       "severity": "high",
       "category": "hidden",
       "title": "Bidirectional control characters",
@@ -97,21 +167,23 @@
       "fix": "Remove the bidi control characters unless the file is genuinely right-to-left prose.",
       "refs": [
         "https://trojansource.codes/"
-      ]
+      ],
+      "snippet": "hexbane fix {file} --write"
     },
     {
-      "id": "GD103",
+      "id": "HB103",
       "severity": "critical",
       "category": "hidden",
       "title": "Hidden Unicode tag text (ASCII smuggling)",
       "why": "Unicode tag characters are invisible in every editor and browser, but many models decode them as normal text. This is a known way to hide instructions inside a skill or tool description.",
-      "fix": "Remove the tag characters. Gardu shows the decoded hidden text so you can see what it said.",
+      "fix": "Remove the tag characters. Hexbane shows the decoded hidden text so you can see what it said.",
       "refs": [
         "https://embracethered.com/blog/posts/2024/hiding-and-finding-text-with-unicode-tags/"
-      ]
+      ],
+      "snippet": "hexbane fix {file} --write"
     },
     {
-      "id": "GD104",
+      "id": "HB104",
       "severity": "high",
       "category": "hidden",
       "title": "Instructions hidden in an HTML comment",
@@ -122,7 +194,7 @@
       ]
     },
     {
-      "id": "GD105",
+      "id": "HB105",
       "severity": "medium",
       "category": "hidden",
       "title": "Encoded text blob",
@@ -133,12 +205,23 @@
       ]
     },
     {
-      "id": "GD201",
+      "id": "HB106",
+      "severity": "high",
+      "category": "hidden",
+      "title": "Disguised text",
+      "why": "Look-alike letters from other alphabets, HTML entities, letters split by spaces, empty quotes or markdown markers hide trigger words from simple filters, while a language model or a shell still reads them as normal words. Hexbane undid the disguise and found the text shown below.",
+      "fix": "Rewrite the text in plain letters or delete it. Someone took care to hide it, so treat the whole file as untrusted until you know who wrote it.",
+      "refs": [
+        "https://www.unicode.org/reports/tr39/"
+      ]
+    },
+    {
+      "id": "HB201",
       "severity": "high",
       "category": "injection",
       "title": "Tries to override the agent's instructions",
       "why": "Text that tells the model to ignore or replace its earlier instructions is the classic prompt-injection pattern. A skill or tool never needs it.",
-      "fix": "Remove the sentence. If you are documenting attacks, quote it in a code block and add a gardu-ignore comment.",
+      "fix": "Remove the sentence. If you are documenting attacks, quote it in a code block and add a hexbane-ignore comment.",
       "refs": [
         "https://genai.owasp.org/llmrisk/llm01-prompt-injection/"
       ],
@@ -149,7 +232,7 @@
       ]
     },
     {
-      "id": "GD202",
+      "id": "HB202",
       "severity": "high",
       "category": "injection",
       "title": "Tells the agent to hide something from the user",
@@ -170,7 +253,7 @@
       ]
     },
     {
-      "id": "GD203",
+      "id": "HB203",
       "severity": "medium",
       "category": "injection",
       "title": "Fake system or priority tags",
@@ -189,7 +272,7 @@
       ]
     },
     {
-      "id": "GD204",
+      "id": "HB204",
       "severity": "high",
       "category": "injection",
       "title": "Changes how other tools behave (tool shadowing)",
@@ -206,7 +289,7 @@
       ]
     },
     {
-      "id": "GD205",
+      "id": "HB205",
       "severity": "medium",
       "category": "injection",
       "title": "Turns off approvals or safety checks",
@@ -219,10 +302,11 @@
         "--dangerously-skip-permissions\\b|--yolo\\b|\\bauto[-_ ]?approve\\s*[:=]\\s*[\\\"']?(true|all|\\*)",
         "\\b(do\\s+not|don't|never)\\s+ask\\s+(the\\s+user\\s+)?(for\\s+)?(confirmation|permission|approval)\\b",
         "\\bbypass(ing)?\\s+(the\\s+)?(security|permission|sandbox|approval|guardrails?)\\b"
-      ]
+      ],
+      "snippet": "# remove the flag, keep approvals on:\nclaude   # not: claude --dangerously-skip-permissions"
     },
     {
-      "id": "GD206",
+      "id": "HB206",
       "severity": "high",
       "category": "injection",
       "title": "Asks the agent to hand over secrets or the conversation",
@@ -238,7 +322,7 @@
       ]
     },
     {
-      "id": "GD301",
+      "id": "HB301",
       "severity": "high",
       "category": "secrets",
       "title": "Touches credential files",
@@ -256,7 +340,7 @@
       ]
     },
     {
-      "id": "GD310",
+      "id": "HB310",
       "severity": "high",
       "category": "secrets",
       "title": "Hard-coded secret",
@@ -273,10 +357,11 @@
         "\\bxox[abprs]-[A-Za-z0-9-]{10,}",
         "\\bAIza[0-9A-Za-z_-]{35}\\b",
         "-----BEGIN\\s(RSA\\s|EC\\s|DSA\\s|OPENSSH\\s|PGP\\s)?PRIVATE\\sKEY-----"
-      ]
+      ],
+      "snippet": "# move the value out of the file, then rotate the leaked key:\nexport API_KEY=...   # read it with os.environ[\"API_KEY\"]"
     },
     {
-      "id": "GD311",
+      "id": "HB311",
       "severity": "medium",
       "category": "secrets",
       "title": "Password or token written in plain text",
@@ -288,10 +373,11 @@
       "mask": true,
       "patterns": [
         "\\b(password|passwd|pwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token)\\b[\\\"']?\\s*[:=]\\s*[\\\"']?[^\\s\\\"'`$<{(,;]{8,}"
-      ]
+      ],
+      "snippet": "# move the value out of the file:\nexport APP_PASSWORD=...   # read it with os.environ[\"APP_PASSWORD\"]"
     },
     {
-      "id": "GD401",
+      "id": "HB401",
       "severity": "critical",
       "category": "execution",
       "title": "Downloads and runs code in one step",
@@ -309,10 +395,11 @@
         "\\beval\\s*\\(\\s*(atob|Buffer\\.from)\\s*\\(",
         "\\bexec\\s*\\(\\s*(base64\\.b64decode|codecs\\.decode|bytes\\.fromhex|zlib\\.decompress|marshal\\.loads)",
         "\\bexec\\s*\\(\\s*(urllib\\.request\\.urlopen|requests\\.get|urlopen)\\s*\\("
-      ]
+      ],
+      "snippet": "curl -fsSLo install.sh https://example.com/install.sh\nsha256sum install.sh   # compare with the checksum the author publishes\nless install.sh        # read it\nbash install.sh"
     },
     {
-      "id": "GD402",
+      "id": "HB402",
       "severity": "high",
       "category": "exfiltration",
       "title": "Sends data to a known drop-box endpoint",
@@ -328,7 +415,7 @@
       ]
     },
     {
-      "id": "GD403",
+      "id": "HB403",
       "severity": "medium",
       "category": "exfiltration",
       "title": "Uploads a local file",
@@ -351,7 +438,7 @@
       ]
     },
     {
-      "id": "GD404",
+      "id": "HB404",
       "severity": "high",
       "category": "execution",
       "title": "Destructive command",
@@ -369,7 +456,7 @@
       ]
     },
     {
-      "id": "GD405",
+      "id": "HB405",
       "severity": "medium",
       "category": "execution",
       "title": "Installs itself to run again later",
@@ -386,7 +473,7 @@
       ]
     },
     {
-      "id": "GD501",
+      "id": "HB501",
       "severity": "medium",
       "category": "config",
       "title": "MCP server package is not pinned",
@@ -394,10 +481,11 @@
       "fix": "Pin an exact version, e.g. some-mcp-server@1.4.2 or some-mcp-server==1.4.2.",
       "refs": [
         "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
-      ]
+      ],
+      "snippet": "\"args\": [\"-y\", \"<package>@<exact-version>\"]"
     },
     {
-      "id": "GD502",
+      "id": "HB502",
       "severity": "medium",
       "category": "config",
       "title": "MCP server gets your whole disk or home folder",
@@ -406,10 +494,11 @@
       "refs": [
         "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
       ],
-      "severity_if_filesystem": "high"
+      "severity_if_filesystem": "high",
+      "snippet": "\"args\": [\"<package>@<version>\", \"/path/to/the/one/folder/it/needs\"]"
     },
     {
-      "id": "GD503",
+      "id": "HB503",
       "severity": "high",
       "category": "config",
       "title": "Remote MCP server over plain HTTP",
@@ -417,10 +506,11 @@
       "fix": "Use an https:// URL (or a localhost address for local servers).",
       "refs": [
         "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
-      ]
+      ],
+      "snippet": "\"url\": \"https://<host>/mcp\""
     },
     {
-      "id": "GD504",
+      "id": "HB504",
       "severity": "medium",
       "category": "config",
       "title": "Secret written into the MCP config",
@@ -429,10 +519,11 @@
       "refs": [
         "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
       ],
-      "mask": true
+      "mask": true,
+      "snippet": "\"env\": { \"API_KEY\": \"${API_KEY}\" }   // set API_KEY in your shell or secret store"
     },
     {
-      "id": "GD505",
+      "id": "HB505",
       "severity": "medium",
       "category": "config",
       "title": "MCP server starts through an inline shell command",
@@ -440,10 +531,11 @@
       "fix": "Point command at the server binary and pass plain args.",
       "refs": [
         "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
-      ]
+      ],
+      "snippet": "\"command\": \"npx\",\n\"args\": [\"-y\", \"<package>@<exact-version>\"]"
     },
     {
-      "id": "GD506",
+      "id": "HB506",
       "severity": "high",
       "category": "config",
       "title": "Container runs with host-level access",
@@ -451,10 +543,11 @@
       "fix": "Drop --privileged and mount only the folders the server needs.",
       "refs": [
         "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
-      ]
+      ],
+      "snippet": "docker run --rm -i --read-only --cap-drop=ALL <image>   # no --privileged, --network host or -v /:/host"
     },
     {
-      "id": "GD601",
+      "id": "HB601",
       "severity": "low",
       "category": "tool",
       "title": "Very long tool description",
@@ -465,7 +558,7 @@
       ]
     },
     {
-      "id": "GD602",
+      "id": "HB602",
       "severity": "high",
       "category": "tool",
       "title": "Side-channel parameter",
@@ -476,7 +569,7 @@
       ]
     },
     {
-      "id": "GD603",
+      "id": "HB603",
       "severity": "high",
       "category": "tool",
       "title": "Description talks about another tool",
@@ -487,7 +580,7 @@
       ]
     },
     {
-      "id": "GD701",
+      "id": "HB701",
       "severity": "medium",
       "category": "scope",
       "title": "Skill does more than it says",
@@ -498,26 +591,28 @@
       ]
     },
     {
-      "id": "GD801",
+      "id": "HB801",
       "severity": "high",
       "category": "pinning",
       "title": "Changed since you pinned it",
       "why": "This file or tool description changed after you approved it. Silent changes after approval are the 'rug pull' attack.",
-      "fix": "Review the diff. If it is fine, run gardu lock again to approve the new version.",
+      "fix": "Review the diff. If it is fine, run hexbane lock again to approve the new version.",
       "refs": [
         "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
-      ]
+      ],
+      "snippet": "hexbane scan {file}        # review what changed\nhexbane lock <folder>      # re-pin only after you trust the change"
     },
     {
-      "id": "GD802",
+      "id": "HB802",
       "severity": "medium",
       "category": "pinning",
       "title": "New since you pinned it",
       "why": "A file or tool appeared that was not there when you approved this set.",
-      "fix": "Review it, then run gardu lock again.",
+      "fix": "Review it, then run hexbane lock again.",
       "refs": [
         "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
-      ]
+      ],
+      "snippet": "hexbane scan {file}\nhexbane lock <folder>      # pin it once you trust it"
     }
   ],
   "capabilities": {
@@ -681,7 +776,7 @@
     "secrets"
   ],
   "downgrade_rules": [
-    "GD201"
+    "HB201"
   ],
   "comment_prefixes": [
     "//",

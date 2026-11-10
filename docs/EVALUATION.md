@@ -1,7 +1,7 @@
-# Gardu evaluation
+# Hexbane evaluation
 
 Every number here comes from `python tests/evaluate.py` (labelled corpora) and
-`python tests/evaluate.py <folder> ...` (public folders). Measured on 2026-11-10 with rules version in `gardu/rules.json`.
+`python tests/evaluate.py <folder> ...` (public folders). Measured on 2026-11-10 with rules version in `hexbane/rules.json`.
 
 ## Method
 
@@ -14,13 +14,18 @@ Every number here comes from `python tests/evaluate.py` (labelled corpora) and
 - **Public folders** (`anthropics/skills` @ 2c5958e, `modelcontextprotocol/servers` @ 3638028): real, presumably benign
   repositories. They have no labels, so they measure **false alarms**, not detection. Every non-PASS file is listed below
   with a verdict on whether the alarm is fair.
+- **Disguised set** (`corpus/obfuscated.json`, 65 samples): every malicious tuning sample rewritten by
+  `tests/obfuscate.py` with one evasion trick each - look-alike Cyrillic/Greek letters, full-width letters, HTML
+  entities, spaced letters (wide or uniform gaps), markdown splits, shell-quote splits, words broken across lines. Only
+  the words inside a rule match are rewritten. "Rules kept" counts the rules the undisguised original triggers that
+  still fire on the disguised copy. Measured with the unfolding pass switched off (v0.1 behaviour) and on.
 - Samples are stored base64-encoded because Windows Defender quarantined a plain-text PowerShell attack sample.
-- The browser scanner (`web/scan.js`) was checked against the Python scanner on all five corpora: identical rule, file,
+- The browser scanner (`web/scan.js`) was checked against the Python scanner on all six corpora: identical rule, file,
   line and severity for every finding (`ui-tests/parity.py`).
 
 Two tuning samples are labelled with a deliberately "wrong" class:
-`b04-security-docs` is benign documentation that quotes `curl | sh`; Gardu fails it on purpose (quoted attacks are
-indistinguishable from real ones to a pattern scanner - suppress with `gardu-ignore` after review).
+`b04-security-docs` is benign documentation that quotes `curl | sh`; Hexbane fails it on purpose (quoted attacks are
+indistinguishable from real ones to a pattern scanner - suppress with `hexbane-ignore` after review).
 `m23-long-description` is a suspicious but harmless long tool description; it only earns a low finding, so it passes.
 
 ## Summary
@@ -29,6 +34,7 @@ indistinguishable from real ones to a pattern scanner - suppress with `gardu-ign
 |---|---|---|---|
 | Tuning | 23/24 (m23 is low-only by design) | 1/7 (b04 by design) | 31/31 |
 | **Held-out** | **11/11** | **0/5** | 15/16 |
+| **Disguised set** | 53/65 without unfolding -> **63/65** with it; rules kept 72/123 -> **109/123** | - | - |
 | Invariant PoCs | 3/3 FAIL | - | - |
 | anthropics/skills | - | 5 of 273 files (1 FAIL, 4 REVIEW) | - |
 | MCP servers | - | 2 of 388 files (0 FAIL, 2 REVIEW) | - |
@@ -37,17 +43,25 @@ Held-out miss: `h07-zed-config` (an MCP config in Zed's format with an unpinned 
 instead of FAIL - both findings fired, but at medium severity because inline secrets are often placeholders in example
 configs. Not tuned after the fact.
 
-Speed: about 0.2 MB/s in pure Python on a laptop (3.5 MB of skills in 18 s); the browser is similar.
+Disguised-set misses: both versions of `m22-file-upload` with spaced letters (`-F f i l e=@...`): the spaced flag
+letters merge into one word, so the upload pattern no longer matches. Uniform spacing (the same gap between letters as
+between words) is only partly recovered (8/14 rules) because word boundaries are lost. Line-broken words keep 10/14
+rules; homoglyphs 23/25. Not tuned further on this set.
+
+The unfolding pass did not change any public-folder result (same 5 + 2 files as v0.1).
+
+Speed: about 0.1 MB/s in pure Python on a busy laptop (3.5 MB of skills in 39 s with the unfolding pass, measured
+while other jobs ran; 18 s in v0.1 on an idle machine, about 27% overhead measured back to back); the browser is similar.
 
 ## Review of the public-folder alarms
 
 | File | Verdict | Fair? |
 |---|---|---|
-| skills/claude-api/shared/managed-agents-onboarding-from-url.md | FAIL (GD401) | False alarm: it tells the agent *never* to run a page's setup scripts and quotes `curl ... \| sh` as the bad example. |
-| skills/claude-api/shared/model-migration.md | REVIEW (GD201) | False alarm: it advises *avoiding* override wording and quotes "ignore what the user said" as the example. |
-| skills/claude-api/shared/evals/report/build-report-lite.mjs, runner-scaffold.mjs | REVIEW (GD301) | False alarm: a code comment uses `~/.ssh/id_rsa` as an example of a path an attacker might target. |
-| skills/pdf/reference.md | REVIEW (GD311) | False alarm: `password="secret"` in a PDF-encryption example. |
-| servers: scripts/lib/skill-manifest.test.mjs, src/fetch/tests/test_non_cp1252_pages.py | REVIEW (GD101) | Fair: test fixtures that really contain invisible/BOM characters. |
+| skills/claude-api/shared/managed-agents-onboarding-from-url.md | FAIL (HB401) | False alarm: it tells the agent *never* to run a page's setup scripts and quotes `curl ... \| sh` as the bad example. |
+| skills/claude-api/shared/model-migration.md | REVIEW (HB201) | False alarm: it advises *avoiding* override wording and quotes "ignore what the user said" as the example. |
+| skills/claude-api/shared/evals/report/build-report-lite.mjs, runner-scaffold.mjs | REVIEW (HB301) | False alarm: a code comment uses `~/.ssh/id_rsa` as an example of a path an attacker might target. |
+| skills/pdf/reference.md | REVIEW (HB311) | False alarm: `password="secret"` in a PDF-encryption example. |
+| servers: scripts/lib/skill-manifest.test.mjs, src/fetch/tests/test_non_cp1252_pages.py | REVIEW (HB101) | Fair: test fixtures that really contain invisible/BOM characters. |
 
 So on these two benign repositories, 2 of the 7 alarms are fair and 5 are documentation or comments that *quote* an
 attack in order to warn about it. Quoted attacks are the main false-alarm source; negation words already downgrade
@@ -71,34 +85,34 @@ anthropics/skills is \(5/273 \approx 1.8\%\) and on the MCP servers repository \
 | b01-pinned-config | benign | PASS | PASS | - |
 | b02-honest-skill | benign | PASS | PASS | - |
 | b03-emoji | benign | PASS | PASS | - |
-| b04-security-docs | benign | FAIL | FAIL | GD401 |
+| b04-security-docs | benign | FAIL | FAIL | HB401 |
 | b05-tools-clean | benign | PASS | PASS | - |
 | b06-build-script | benign | PASS | PASS | - |
 | b07-env-config | benign | PASS | PASS | - |
-| m01-poisoned-calculator | malicious | FAIL | FAIL | GD202, GD203, GD206, GD602 |
-| m02-shadow-email | malicious | FAIL | FAIL | GD204, GD603 |
-| m03-hidden-tags-skill | malicious | FAIL | FAIL | GD103, GD401 |
-| m04-zero-width-split | malicious | FAIL | FAIL | GD101, GD201 |
-| m05-html-comment | malicious | FAIL | FAIL | GD104 |
-| m06-curl-pipe-script | malicious | FAIL | FAIL | GD401, GD701 |
-| m07-powershell-iex | malicious | FAIL | FAIL | GD401 |
-| m08-exfil-webhook | malicious | FAIL | FAIL | GD301, GD402 |
-| m09-unpinned-mcp | malicious | FAIL | FAIL | GD501, GD502 |
-| m10-secret-in-config | malicious | FAIL | FAIL | GD310, GD504 |
-| m11-http-remote | malicious | FAIL | FAIL | GD503 |
-| m12-docker-privileged | malicious | FAIL | FAIL | GD506 |
-| m13-shell-wrapper | malicious | FAIL | FAIL | GD401, GD505 |
-| m14-scope-creep | malicious | FAIL | FAIL | GD301, GD701 |
-| m15-persistence | malicious | FAIL | FAIL | GD405, GD701 |
-| m16-bidi | malicious | FAIL | FAIL | GD102 |
-| m17-base64-payload | malicious | FAIL | FAIL | GD105, GD201, GD202, GD402 |
-| m18-override | malicious | FAIL | FAIL | GD201, GD402 |
-| m19-destructive | malicious | FAIL | FAIL | GD404 |
-| m20-secret-harvest | malicious | FAIL | FAIL | GD206, GD602 |
-| m21-auto-approve | malicious | REVIEW | REVIEW | GD205 |
-| m22-file-upload | malicious | REVIEW | REVIEW | GD403 |
-| m23-long-description | malicious | PASS | PASS | GD601 |
-| m24-eval-atob | malicious | FAIL | FAIL | GD401 |
+| m01-poisoned-calculator | malicious | FAIL | FAIL | HB202, HB203, HB206, HB602 |
+| m02-shadow-email | malicious | FAIL | FAIL | HB204, HB603 |
+| m03-hidden-tags-skill | malicious | FAIL | FAIL | HB103, HB401 |
+| m04-zero-width-split | malicious | FAIL | FAIL | HB101, HB201 |
+| m05-html-comment | malicious | FAIL | FAIL | HB104 |
+| m06-curl-pipe-script | malicious | FAIL | FAIL | HB401, HB701 |
+| m07-powershell-iex | malicious | FAIL | FAIL | HB401 |
+| m08-exfil-webhook | malicious | FAIL | FAIL | HB301, HB402 |
+| m09-unpinned-mcp | malicious | FAIL | FAIL | HB501, HB502 |
+| m10-secret-in-config | malicious | FAIL | FAIL | HB310, HB504 |
+| m11-http-remote | malicious | FAIL | FAIL | HB503 |
+| m12-docker-privileged | malicious | FAIL | FAIL | HB506 |
+| m13-shell-wrapper | malicious | FAIL | FAIL | HB401, HB505 |
+| m14-scope-creep | malicious | FAIL | FAIL | HB301, HB701 |
+| m15-persistence | malicious | FAIL | FAIL | HB405, HB701 |
+| m16-bidi | malicious | FAIL | FAIL | HB102 |
+| m17-base64-payload | malicious | FAIL | FAIL | HB105, HB201, HB202, HB402 |
+| m18-override | malicious | FAIL | FAIL | HB201, HB402 |
+| m19-destructive | malicious | FAIL | FAIL | HB404 |
+| m20-secret-harvest | malicious | FAIL | FAIL | HB206, HB602 |
+| m21-auto-approve | malicious | REVIEW | REVIEW | HB205 |
+| m22-file-upload | malicious | REVIEW | REVIEW | HB403 |
+| m23-long-description | malicious | PASS | PASS | HB601 |
+| m24-eval-atob | malicious | FAIL | FAIL | HB401 |
 
 Exact verdict: 31/31 - malicious caught: 23/24 - benign false alarms: 1/7
 
@@ -106,17 +120,17 @@ Exact verdict: 31/31 - malicious caught: 23/24 - benign false alarms: 1/7
 
 | sample | set | expected | got | rules |
 |---|---|---|---|---|
-| h01-poison-summarizer | malicious | FAIL | FAIL | GD202, GD203, GD206, GD301 |
-| h02-redirect-payments | malicious | FAIL | FAIL | GD204, GD603 |
-| h03-tag-smuggle-agents | malicious | FAIL | FAIL | GD103 |
-| h04-wget-python | malicious | FAIL | FAIL | GD401, GD701 |
-| h05-encoded-ps | malicious | FAIL | FAIL | GD401 |
-| h06-telegram-exfil | malicious | FAIL | FAIL | GD301, GD402 |
-| h07-zed-config | malicious | FAIL | REVIEW **(differs)** | GD501, GD504 |
-| h08-hidden-comment-rules | malicious | FAIL | FAIL | GD104 |
-| h09-undeclared-network | malicious | REVIEW | REVIEW | GD701 |
-| h10-rm-root | malicious | FAIL | FAIL | GD404 |
-| h11-cron-persist | malicious | FAIL | FAIL | GD401, GD405, GD701 |
+| h01-poison-summarizer | malicious | FAIL | FAIL | HB202, HB203, HB206, HB301 |
+| h02-redirect-payments | malicious | FAIL | FAIL | HB204, HB603 |
+| h03-tag-smuggle-agents | malicious | FAIL | FAIL | HB103 |
+| h04-wget-python | malicious | FAIL | FAIL | HB401, HB701 |
+| h05-encoded-ps | malicious | FAIL | FAIL | HB401 |
+| h06-telegram-exfil | malicious | FAIL | FAIL | HB301, HB402 |
+| h07-zed-config | malicious | FAIL | REVIEW **(differs)** | HB501, HB504 |
+| h08-hidden-comment-rules | malicious | FAIL | FAIL | HB104 |
+| h09-undeclared-network | malicious | REVIEW | REVIEW | HB701 |
+| h10-rm-root | malicious | FAIL | FAIL | HB404 |
+| h11-cron-persist | malicious | FAIL | FAIL | HB401, HB405, HB701 |
 | h12-clean-skill | benign | PASS | PASS | - |
 | h13-clean-mcp-config | benign | PASS | PASS | - |
 | h14-clean-tools | benign | PASS | PASS | - |
@@ -125,7 +139,42 @@ Exact verdict: 31/31 - malicious caught: 23/24 - benign false alarms: 1/7
 
 Exact verdict: 15/16 - malicious caught: 11/11 - benign false alarms: 0/5
 
+### obfuscated (65 samples, generated by tests/obfuscate.py)
+
+| trick | samples | flagged without unfolding | flagged with unfolding | rules kept without | rules kept with |
+|---|---|---|---|---|---|
+| entities | 7 | 6/7 | 7/7 | 7/14 | 14/14 |
+| fullwidth | 14 | 14/14 | 14/14 | 25/25 | 25/25 |
+| homoglyph | 14 | 9/14 | 14/14 | 12/25 | 23/25 |
+| linebreak | 7 | 6/7 | 7/7 | 7/14 | 10/14 |
+| markdown | 7 | 6/7 | 7/7 | 7/14 | 14/14 |
+| shellquote | 2 | 0/2 | 2/2 | 0/3 | 2/3 |
+| spaced | 7 | 6/7 | 6/7 | 7/14 | 13/14 |
+| spaced-uniform | 7 | 6/7 | 6/7 | 7/14 | 8/14 |
+| **all** | 65 | 53/65 | 63/65 | 72/123 | 109/123 |
+
 ## Public folders (unlabelled)
+
+### skills (273 files, 3.5 MB, 38.8 s)
+
+Files: 268 PASS, 4 REVIEW, 1 FAIL. Skipped: 0.
+
+| file | verdict | rules |
+|---|---|---|
+| skills/claude-api/shared/managed-agents-onboarding-from-url.md | FAIL | HB401 |
+| skills/claude-api/shared/model-migration.md | REVIEW | HB201 |
+| skills/claude-api/shared/evals/report/build-report-lite.mjs | REVIEW | HB301 |
+| skills/claude-api/shared/evals/report/runner-scaffold.mjs | REVIEW | HB301 |
+| skills/pdf/reference.md | REVIEW | HB311 |
+
+### servers (388 files, 4.8 MB, 36.0 s)
+
+Files: 386 PASS, 2 REVIEW, 0 FAIL. Skipped: 0.
+
+| file | verdict | rules |
+|---|---|---|
+| scripts/lib/skill-manifest.test.mjs | REVIEW | HB101 |
+| src/fetch/tests/test_non_cp1252_pages.py | REVIEW | HB101 |
 
 ### mcp-injection-experiments (4 files, 0.0 MB, 0.0 s)
 
@@ -133,29 +182,6 @@ Files: 1 PASS, 0 REVIEW, 3 FAIL. Skipped: 0.
 
 | file | verdict | rules |
 |---|---|---|
-| direct-poisoning.py | FAIL | GD203, GD206, GD301, GD602 |
-| shadowing.py | FAIL | GD202, GD203, GD204 |
-| whatsapp-takeover.py | FAIL | GD202, GD203, GD204 |
-
-### skills (273 files, 3.5 MB, 18.2 s)
-
-Files: 268 PASS, 4 REVIEW, 1 FAIL. Skipped: 0.
-
-| file | verdict | rules |
-|---|---|---|
-| skills/claude-api/shared/managed-agents-onboarding-from-url.md | FAIL | GD401 |
-| skills/claude-api/shared/model-migration.md | REVIEW | GD201 |
-| skills/claude-api/shared/evals/report/build-report-lite.mjs | REVIEW | GD301 |
-| skills/claude-api/shared/evals/report/runner-scaffold.mjs | REVIEW | GD301 |
-| skills/pdf/reference.md | REVIEW | GD311 |
-
-### servers (388 files, 4.8 MB, 18.1 s)
-
-Files: 386 PASS, 2 REVIEW, 0 FAIL. Skipped: 0.
-
-| file | verdict | rules |
-|---|---|---|
-| scripts/lib/skill-manifest.test.mjs | REVIEW | GD101 |
-| src/fetch/tests/test_non_cp1252_pages.py | REVIEW | GD101 |
-
-
+| direct-poisoning.py | FAIL | HB203, HB206, HB301, HB602 |
+| shadowing.py | FAIL | HB202, HB203, HB204 |
+| whatsapp-takeover.py | FAIL | HB202, HB203, HB204 |

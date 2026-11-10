@@ -1,4 +1,4 @@
-# Gardu rubric v1 (frozen 2026-11-10, before any Gardu code was written)
+﻿# Hexbane rubric v1 (frozen 2026-11-10, before any code was written; product renamed Gardu -> Hexbane in round 2, criteria unchanged)
 
 Goal beyond the goal: Juwen gets a security tool people can trust and cite - one install-free check that
 tells a developer whether an AI agent skill, MCP server or tool is safe to load, plus the runtime guard

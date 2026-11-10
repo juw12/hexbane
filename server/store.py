@@ -1,4 +1,4 @@
-"""SQLite persistence for the Gardu chat gate: decision log, admin feedback, learned examples."""
+"""SQLite persistence for the Hexbane chat gate: decision log, admin feedback, learned examples."""
 
 import json
 import sqlite3

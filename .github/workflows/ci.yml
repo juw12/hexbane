@@ -34,11 +34,11 @@ jobs:
       - name: Browser scanner equals Python scanner
         run: python ui-tests/parity.py
         env:
-          GARDU_BROWSER: chromium
+          HEXBANE_BROWSER: chromium
       - name: Scan page renders without JavaScript errors
         run: python ui-tests/shots.py /tmp/shots
         env:
-          GARDU_BROWSER: chromium
+          HEXBANE_BROWSER: chromium
 
   self-scan:
     runs-on: ubuntu-latest

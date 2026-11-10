@@ -1,7 +1,7 @@
-// Service worker: makes Gardu installable and lets it open offline.
+// Service worker: makes Hexbane installable and lets it open offline.
 // Only same-origin files are cached; the app makes no third-party requests.
 
-const CACHE_NAME = "gardu-shell-v1";
+const CACHE_NAME = "hexbane-shell-v1";
 const SHELL_FILES = [
   "./",
   "index.html",
@@ -30,7 +30,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => (key.startsWith("scopeguard-") || key.startsWith("gardu-")) && key !== CACHE_NAME).map((key) => caches.delete(key)))
+      Promise.all(keys.filter((key) => (key.startsWith("scopeguard-") || key.startsWith("hexbane-")) && key !== CACHE_NAME).map((key) => caches.delete(key)))
     )
   );
   self.clients.claim();

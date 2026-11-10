@@ -1,6 +1,6 @@
 # Files that contain attack examples on purpose (rules, samples, tests, docs about attacks).
 # Everything else in this repository must scan clean at 'high' - CI checks that with the action itself.
-gardu/rules.json
+hexbane/rules.json
 web/rules.json
 web/scan.js
 web/scanview.js
@@ -17,4 +17,4 @@ server/engine.py
 web/policies/
 server/policy_*.json
 # Call-gate policy: its deny list names credential paths so they can be blocked
-gardu/policy_default.json
+hexbane/policy_default.json

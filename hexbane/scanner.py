@@ -1,4 +1,4 @@
-"""Gardu scanner: checks AI agent skills, MCP configs, tool manifests and their scripts before you load them.
+"""Hexbane scanner: checks AI agent skills, MCP configs, tool manifests and their scripts before you load them.
 
 Standard library only. The browser app (web/scan.js) implements the same logic from the same rules.json,
 and the UI test suite checks that both give identical findings on the whole corpus.
@@ -48,6 +48,8 @@ def load_rules(path: Path = RULES_PATH) -> dict:
 RULES = load_rules()
 INVISIBLE = set(RULES["invisible"])
 BIDI = set(RULES["bidi"])
+CONFUSABLE_TABLE = str.maketrans(RULES["confusables"])
+FOLD_RULES = set(RULES["fold_rules"])
 
 
 @dataclass
@@ -240,13 +242,13 @@ class FileScan:
         for number in (line, line - 1):
             if 0 < number <= len(self.lines):
                 content = self.lines[number - 1]
-                marker = content.find("gardu-ignore")
+                marker = content.find("hexbane-ignore")
                 if marker == -1:
                     continue
-                if number == line - 1 and "gardu-ignore-next-line" not in content:
+                if number == line - 1 and "hexbane-ignore-next-line" not in content:
                     continue
                 rest = content[marker:]
-                ids = re.findall(r"GD\d{3}", rest)
+                ids = re.findall(r"HB\d{3}", rest)
                 if not ids or rule_id in ids:
                     return True
         return False
@@ -261,7 +263,7 @@ def severity_for(rule: dict, kind: str) -> str:
 
 def context_severity(rule: dict, kind: str, text: str, start: int) -> str:
     """Lower severity one level when the match sits in a code comment, or in a warning such as
-    'never run curl | sh'. The finding is still reported, so nothing is hidden from the user."""  # gardu-ignore: GD401 (example text)
+    'never run curl | sh'. The finding is still reported, so nothing is hidden from the user."""  # hexbane-ignore: HB401 (example text)
     severity = severity_for(rule, kind)
     line_start = text.rfind("\n", 0, start) + 1
     prefix = text[line_start:start]
@@ -288,7 +290,7 @@ def scan_patterns(scan: FileScan, text: str, line_offset: Optional[int] = None, 
                 line = line_offset if line_offset is not None else line_of(text, match.start())
                 evidence = None
                 if rule.get("mask"):
-                    if rule["id"] == "GD311":
+                    if rule["id"] == "HB311":
                         raw_value = re.split(r"[:=]", match.group(0), maxsplit=1)[-1].strip()
                         quoted = raw_value[:1] in ("\"", "'")
                         value = raw_value.strip("\"'")
@@ -300,6 +302,106 @@ def scan_patterns(scan: FileScan, text: str, line_offset: Optional[int] = None, 
                 severity = (severity_for(rule, scan.kind) if line_offset is not None
                             else context_severity(rule, scan.kind, text, match.start()))
                 scan.add(rule["id"], line, evidence=evidence, hidden=hidden_source, severity=severity)
+
+
+# ---------------------------------------------------------------- disguised text (fold pass)
+
+FOLD_ENTITY = re.compile(r"&#(\d{2,5});|&#[xX]([0-9a-fA-F]{2,5});")
+FOLD_STEPS = [
+    # (pattern, replacement); replacement None means "decode the entity"
+    (re.compile(r"(?<=[A-Za-z])(\*{1,2}|~~|`)(?=[A-Za-z])"), ""),          # ig**no**re
+    (re.compile(r"(?<=[A-Za-z])(''|\"\")(?=[A-Za-z])"), ""),                # cu''rl
+    (re.compile(r"(?<![A-Za-z] )(?<![A-Za-z])[A-Za-z](?: [A-Za-z])+(?![A-Za-z])(?! [A-Za-z](?![A-Za-z]))"), "SPACED"),  # i g n o r e
+]
+FOLD_NEWLINE = re.compile(r"(?<=[^\n])\n(?=[^\n])")
+FOLD_GAPS = re.compile(r"(?<=\S)[ \t]{2,}(?=\S)")
+
+
+def fold_sub(text: str, source: list, disguised: list, pattern, replace, mark: bool = True) -> tuple[str, list, list]:
+    """Apply one substitution while keeping, for every output character, the index of the input character it
+    came from (so findings keep their original line numbers) and whether it was produced by undoing a disguise."""
+    out, out_source, out_disguised = [], [], []
+    cursor = 0
+    for match in pattern.finditer(text):
+        out.append(text[cursor:match.start()])
+        out_source.extend(source[cursor:match.start()])
+        out_disguised.extend(disguised[cursor:match.start()])
+        replacement = replace(match)
+        anchor = source[match.start()]
+        out.append(replacement)
+        out_source.extend([anchor] * len(replacement))
+        out_disguised.extend([mark] * len(replacement))
+        if mark and not replacement and match.end() < len(text):
+            disguised = disguised[:match.end()] + [True] + disguised[match.end() + 1:]
+        cursor = match.end()
+    out.append(text[cursor:])
+    out_source.extend(source[cursor:])
+    out_disguised.extend(disguised[cursor:])
+    return "".join(out), out_source, out_disguised
+
+
+def entity_char(match) -> str:
+    code = int(match.group(1)) if match.group(1) else int(match.group(2), 16)
+    return chr(code) if 32 <= code < 0x110000 else match.group(0)
+
+
+def fold(clean: str) -> Optional[tuple[str, list, list]]:
+    """Undo common disguises: look-alike letters, HTML entities, markdown markers or empty quotes inside words,
+    letters separated by spaces, and lines wrapped mid-sentence. Returns None when nothing changes."""
+    text = clean.translate(CONFUSABLE_TABLE)
+    disguised = [a != b for a, b in zip(text, clean)]
+    source = list(range(len(text)))
+    text, source, disguised = fold_sub(text, source, disguised, FOLD_ENTITY, entity_char)
+    for pattern, replacement in FOLD_STEPS:
+        if replacement == "SPACED":
+            text, source, disguised = fold_sub(text, source, disguised, pattern, lambda m: m.group(0).replace(" ", ""))
+        else:
+            text, source, disguised = fold_sub(text, source, disguised, pattern, lambda m, r=replacement: r)
+    text, source, disguised = fold_sub(text, source, disguised, FOLD_GAPS, lambda m: " ", mark=False)
+    joined = FOLD_NEWLINE.sub(" ", text)
+    if joined == clean:
+        return None
+    return joined, source, disguised
+
+
+def fold_window(text: str, source: list, clean: str, start: int, end: int) -> str:
+    """Decoded text for a folded match, limited to the original line(s) the match came from."""
+    origin = source[start]
+    first_line_start = clean.rfind("\n", 0, origin) + 1
+    line_end = clean.find("\n", source[end - 1])
+    if line_end == -1:
+        line_end = len(clean)
+    left = start
+    while left > 0 and start - left < 80 and source[left - 1] >= first_line_start:
+        left -= 1
+    right = end
+    while right < len(text) and right - end < 80 and source[right] < line_end:
+        right += 1
+    return " ".join(text[left:right].split())[:300]
+
+
+def scan_folded(scan: FileScan, clean: str) -> None:
+    """Rescan the folded text and report what only the folded text reveals."""
+    folded = fold(clean)
+    if folded is None:
+        return
+    text, source, disguised = folded
+    if scan.kind == "code" and not any(disguised):
+        return  # only wrapping or spacing changed; that matters for prompt text, not for source code
+    for rule in RULES["rules"]:
+        if rule["id"] not in FOLD_RULES or not rule.get("compiled") or not applies(rule, scan.kind):
+            continue
+        for pattern in rule["compiled"]:
+            for match in pattern.finditer(text):
+                origin = source[match.start()]
+                line = line_of(clean, origin)
+                if (rule["id"], line, "") in scan.seen:
+                    continue
+                snippet = fold_window(text, source, clean, match.start(), match.end())
+                severity = context_severity(rule, scan.kind, clean, origin)
+                scan.add(rule["id"], line, hidden=snippet, severity=severity)
+                if any(disguised[match.start():match.end()]):
+                    scan.add("HB106", line, hidden=snippet)
 
 
 def invisible_severity(kind: str, text: str, index: int) -> str:
@@ -324,15 +426,15 @@ def scan_hidden_chars(scan: FileScan) -> None:
                 end += 1
             hidden = decode_tags(text[index:end])
             line = line_of(text, index)
-            scan.add("GD103", line, hidden=hidden[:300] or None)
+            scan.add("HB103", line, hidden=hidden[:300] or None)
             if hidden:
                 scan_patterns(scan, hidden, line_offset=line, hidden_source=hidden[:300])
             index = end
             continue
         if code in BIDI:
-            scan.add("GD102", line_of(text, index))
+            scan.add("HB102", line_of(text, index))
         elif code in INVISIBLE and not legit_joiner(text, index):
-            scan.add("GD101", line_of(text, index), severity=invisible_severity(scan.kind, text, index))
+            scan.add("HB101", line_of(text, index), severity=invisible_severity(scan.kind, text, index))
         index += 1
 
 
@@ -348,7 +450,7 @@ def scan_comments(scan: FileScan, clean: str) -> None:
         if len(body.strip()) < 20:
             continue
         if RULES["comment_ai_re"].search(body) and RULES["comment_order_re"].search(body):
-            scan.add("GD104", line_of(clean, match.start()), hidden=" ".join(body.split())[:300])
+            scan.add("HB104", line_of(clean, match.start()), hidden=" ".join(body.split())[:300])
 
 
 def scan_base64(scan: FileScan, clean: str) -> None:
@@ -368,7 +470,7 @@ def scan_base64(scan: FileScan, clean: str) -> None:
         before = len(scan.findings)
         scan_patterns(scan, text, line_offset=line, hidden_source=" ".join(text.split())[:300])
         severity = "high" if len(scan.findings) > before else None
-        scan.add("GD105", line, hidden=" ".join(text.split())[:300], severity=severity)
+        scan.add("HB105", line, hidden=" ".join(text.split())[:300], severity=severity)
 
 
 def tool_line(text: str, name: str) -> int:
@@ -395,15 +497,15 @@ def scan_tools(scan: FileScan, parsed) -> None:
             scan.add(finding.rule, line, evidence=f"tool '{name}': {finding.evidence}", hidden=finding.hidden_text,
                      severity=finding.severity)
         if len(description) > 1200:
-            scan.add("GD601", line, evidence=f"tool '{name}': description is {len(description)} characters")
+            scan.add("HB601", line, evidence=f"tool '{name}': description is {len(description)} characters")
         for key, value in properties.items():
             if key.lower() in RULES["side_channel_params"]:
                 param_description = value.get("description", "") if isinstance(value, dict) else ""
                 if RULES["side_channel_re"].search(description + " " + param_description):
-                    scan.add("GD602", line, evidence=f"tool '{name}': parameter '{key}'", extra_key=key)
+                    scan.add("HB602", line, evidence=f"tool '{name}': parameter '{key}'", extra_key=key)
         for other in names:
             if other != name and len(other) >= 4 and re.search(r"(?<![\w-])" + re.escape(other) + r"(?![\w-])", description):
-                scan.add("GD603", line, evidence=f"tool '{name}' mentions tool '{other}'", extra_key=other)
+                scan.add("HB603", line, evidence=f"tool '{name}' mentions tool '{other}'", extra_key=other)
 
 
 PACKAGE_RUNNERS = {"npx", "bunx", "uvx", "pipx", "pnpm", "yarn", "npm"}
@@ -471,18 +573,18 @@ def scan_config(scan: FileScan, parsed) -> None:
         runner = base.replace(".cmd", "").replace(".exe", "")
         spec = package_spec(command, args)
         if spec is not None and not is_pinned(spec, runner):
-            scan.add("GD501", line, evidence=f"server '{name}': {runner} {spec}", extra_key=name)
+            scan.add("HB501", line, evidence=f"server '{name}': {runner} {spec}", extra_key=name)
         filesystem_like = "filesystem" in name.lower() or any("filesystem" in a.lower() for a in args)
         for arg in args:
             if is_broad_root(arg):
                 severity = "high" if filesystem_like else None
-                scan.add("GD502", line, evidence=f"server '{name}': gets '{arg}'", severity=severity, extra_key=name)
+                scan.add("HB502", line, evidence=f"server '{name}': gets '{arg}'", severity=severity, extra_key=name)
                 break
         url = str(server.get("url") or server.get("serverUrl") or "")
         if url.lower().startswith("http://"):
             host = re.sub(r"^http://", "", url, flags=re.I).split("/")[0].split(":")[0].lower()
             if host not in ("localhost", "127.0.0.1", "::1", "[::1]", "0.0.0.0") and not host.endswith(".localhost"):
-                scan.add("GD503", line, evidence=f"server '{name}': {url}", extra_key=name)
+                scan.add("HB503", line, evidence=f"server '{name}': {url}", extra_key=name)
         for block_name in ("env", "headers"):
             block = server.get(block_name)
             if not isinstance(block, dict):
@@ -495,14 +597,14 @@ def scan_config(scan: FileScan, parsed) -> None:
                     continue
                 if value.lower().startswith("bearer ") and ENV_REFERENCE.match(value[7:]):
                     continue
-                scan.add("GD504", line, evidence=f"server '{name}': {block_name}.{key} = {mask_secret(value)}",
+                scan.add("HB504", line, evidence=f"server '{name}': {block_name}.{key} = {mask_secret(value)}",
                          extra_key=f"{name}.{key}")
         if base in SHELLS and any(a.lower() in ("-c", "/c", "-command", "/k", "-encodedcommand", "-e") for a in args):
-            scan.add("GD505", line, evidence=f"server '{name}': {command} {' '.join(args)[:120]}", extra_key=name)
+            scan.add("HB505", line, evidence=f"server '{name}': {command} {' '.join(args)[:120]}", extra_key=name)
         if runner == "docker":
             joined = " ".join(args)
             if re.search(r"--privileged|docker\.sock|(-v|--volume)[ =]/:|--pid[ =]host|--network[ =]host", joined):
-                scan.add("GD506", line, evidence=f"server '{name}': docker {joined[:120]}", extra_key=name)
+                scan.add("HB506", line, evidence=f"server '{name}': docker {joined[:120]}", extra_key=name)
 
 
 def scan_code_tools(scan: FileScan, clean: str) -> None:
@@ -514,7 +616,7 @@ def scan_code_tools(scan: FileScan, clean: str) -> None:
     for match in re.finditer(r"\b(def|function|async\s+def)\s+\w+\s*\(([^)]*)\)", clean):
         params = re.findall(r"\b(sidenote|side_note)\b", match.group(2), re.I)
         if params:
-            scan.add("GD602", line_of(clean, match.start()), extra_key=params[0])
+            scan.add("HB602", line_of(clean, match.start()), extra_key=params[0])
 
 
 def scan_text(path: str, text: str) -> tuple[str, list[Finding]]:
@@ -526,6 +628,7 @@ def scan_text(path: str, text: str) -> tuple[str, list[Finding]]:
     scan_hidden_chars(scan)
     clean = strip_hidden(text)
     scan_patterns(scan, clean)
+    scan_folded(scan, clean)
     scan_comments(scan, clean)
     scan_base64(scan, clean)
     scan_code_tools(scan, clean)
@@ -575,11 +678,11 @@ def scope_findings(skill_path: str, skill_md: str, members: list[tuple[str, str]
                 undeclared.append((key, path, line))
     if not undeclared:
         return []
-    rule = RULES["by_id"]["GD701"]
+    rule = RULES["by_id"]["HB701"]
     severity = "high" if any(key in ("credentials", "persistence") for key, _, _ in undeclared) else rule["severity"]
     parts = [f"{RULES['capabilities'][key]['label']} ({os.path.basename(path)}:{line})" for key, path, line in undeclared]
     return [Finding(
-        rule="GD701", severity=severity, title=rule["title"], file=skill_path, line=1,
+        rule="HB701", severity=severity, title=rule["title"], file=skill_path, line=1,
         evidence="description never mentions: " + "; ".join(parts),
         why=rule["why"], fix=rule["fix"], refs=list(rule.get("refs", [])),
     )]
@@ -619,7 +722,7 @@ def is_minified_name(name: str) -> bool:
 
 
 def load_ignore(root: Path) -> list[str]:
-    ignore_file = root / ".garduignore"
+    ignore_file = root / ".hexbaneignore"
     if not ignore_file.is_file():
         return []
     patterns = []
@@ -652,7 +755,7 @@ def collect_files(root: Path, skipped: Optional[list] = None) -> list[tuple[str,
                 candidates.append((path, path.relative_to(root).as_posix()))
     files = []
     for path, rel in candidates:
-        if path.name == ".garduignore" or ignored(rel, patterns) or not is_text_candidate(path):
+        if path.name == ".hexbaneignore" or ignored(rel, patterns) or not is_text_candidate(path):
             continue
         if is_minified_name(path.name):
             skipped.append({"path": rel, "reason": "minified bundle (not scanned)"})
@@ -704,7 +807,7 @@ def build_report(findings: list[Finding], file_rows: list[dict], skipped: Option
     worst = max((SEVERITY_ORDER[f.severity] for f in findings), default=0)
     worst_name = next(k for k, v in SEVERITY_ORDER.items() if v == worst)
     return {
-        "tool": "gardu",
+        "tool": "hexbane",
         "version": RULES["version"],
         "verdict": verdict_for(worst_name),
         "counts": counts,

@@ -1,5 +1,5 @@
 {
-  "description": "Default Gardu call-gate policy. Copy it and edit the lists for your agent.",
+  "description": "Default Hexbane call-gate policy. Copy it and edit the lists for your agent.",
   "tools": {
     "allow": ["read_*", "list_*", "search_*", "get_*", "fetch"],
     "ask": ["write_*", "edit_*", "create_*", "run_*", "exec*", "shell*", "send_*", "post_*", "delete_*", "move_*"],

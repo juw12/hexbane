@@ -30,3 +30,11 @@
 |---|---|---|---|---|---|---|
 | 2026-11-10 08:45 | v0 baseline: ScopeGuard playground as-is | n/a | 4.67 (Pega-Vision 6.6, Pega-Thinking 2.75; GLM failed) | not run | baseline | split on C1-C5 |
 | 2026-11-10 10:05 | v1 Gardu: scanner + rug-pull pin + tool gate + browser scan + Action + evaluation + Pages | G1-G8 pass (3/3 suites, parity 5/5, UI 11/11, held-out 15/16, self-scan PASS, live G8) | 9.5 (Pega-Vision 9.3, Pega-Thinking 9.7; GLM failed) | not run | kept | docs/hone/v1.json; fix ideas: decoded GD105 view, copyable fixes, mobile statement |
+| v2 | Rename to Hexbane, hex logo, disguised-text unfolding (HB106), decoded text in report, copy-paste fixes and suppressions, `hexbane fix`, disguised corpus (65) with before/after, phone screenshot, README as one story | G1, G2 (6 corpora), G3, G4, G5, G6, G7 pass; G8 after publish | see v2.json | see v2-pair.json | | |
+
+## Round 2 (2026-11-10): user asked for a cooler, non-Indonesian name, a 10/10 attempt, and the weaknesses fixed
+
+- Assumed: new name **Hexbane** ("breaks the hex": injected spells and hex/base64-hidden payloads). Checked: free on PyPI; on GitHub only tiny unrelated repos; on the web an indie horror game and a tiny dev module, no AI or security product. Rejected: IronMoat (ClawMoat/OpenMoat exist), Ironward (an AI security scanner with MCP already uses it), Antivenom (AI prompt WAF).
+- Assumed: repo renamed in place (juw12/gardu -> juw12/hexbane) so stars, issues and the old URL keep working through GitHub's redirect; Pages moves to /hexbane/ and a static redirect page keeps /gardu/ working.
+- Weaknesses targeted (from the v1 judges and the v1 README limits): disguised text slipped past plain patterns; fixes were prose, not copyable; no mobile evidence; README read as two merged tools.
+- Rubric unchanged (frozen); only the product name in its title changed.

@@ -1,11 +1,11 @@
-﻿# Gardu server - load gate, call gate and chat gate
+﻿# Hexbane server - load gate, call gate and chat gate
 
 A drop-in guard between your app and any LLM. It allows on-mission requests, briefly answers
 related ones and steers them back, redirects or throttles off-topic use, and blocks jailbreaks.
 It also shows the business what users actually want.
 Pure Python standard library (3.10+). No installs, no model downloads.
 
-Run it from the repository root with `python -m gardu serve`, or from this folder with `python server.py`.
+Run it from the repository root with `python -m hexbane serve`, or from this folder with `python server.py`.
 
 ## Load gate and call gate
 ```
@@ -13,14 +13,14 @@ POST /v1/scan          {"files": [{"path": "SKILL.md", "content": "..."}]}      
 POST /v1/tool-call     {"tool": "shell", "arguments": {"command": "..."}}        -> {"decision": "allow|ask|deny", "reasons": [...]}
 POST /v1/tool-output   {"source": "web_fetch", "content": "..."}                 -> {"decision": "pass|quarantine", "findings": [...]}
 ```
-The call-gate policy is `gardu/policy_default.json` (change it with `--tool-policy`). In proxy mode, tool calls the
+The call-gate policy is `hexbane/policy_default.json` (change it with `--tool-policy`). In proxy mode, tool calls the
 policy denies are removed from the model's reply and tool results with injected instructions are replaced by a
 quarantine notice before they reach the model.
 
 ## Chat gate: quick start
 ```
 python demo.py        # sends sample traffic, then serves the dashboard at http://127.0.0.1:8787/
-python server.py      # real server (policy_cad_assistant.json, gardu.db)
+python server.py      # real server (policy_cad_assistant.json, hexbane.db)
 python tests.py       # 25 tests (chat, load and call gates) + accuracy report
 ```
 
@@ -36,18 +36,18 @@ If `allowed` is false, show `reply` to the user. For ADJACENT, add `reply` as a 
 ```
 POST /v1/chat/completions   (non-streaming)
 ```
-Allowed requests are forwarded to `GARDU_UPSTREAM`. ADJACENT requests get a steering system message.
+Allowed requests are forwarded to `HEXBANE_UPSTREAM`. ADJACENT requests get a steering system message.
 Off-mission requests get the redirect text as a normal assistant reply, and the LLM is never called.
-The header `X-Gardu-Action` reports the decision.
+The header `X-Hexbane-Action` reports the decision.
 
 ## Configuration (environment variables; the old `SCOPEGUARD_*` names still work)
 | Variable | Purpose |
 |---|---|
-| `GARDU_API_KEY` | bearer key your app must send to `/v1/*` |
-| `GARDU_ADMIN_KEY` | bearer key for the dashboard/admin API; open the dashboard as `/#key=...` |
-| `GARDU_UPSTREAM` | OpenAI-compatible base URL (e.g. `https://api.openai.com/v1`, or a local `http://127.0.0.1:11434/v1`) |
-| `GARDU_UPSTREAM_KEY` | upstream LLM key |
-| `GARDU_JUDGE_MODEL` | enables an LLM judge for low-confidence messages (recommended) |
+| `HEXBANE_API_KEY` | bearer key your app must send to `/v1/*` |
+| `HEXBANE_ADMIN_KEY` | bearer key for the dashboard/admin API; open the dashboard as `/#key=...` |
+| `HEXBANE_UPSTREAM` | OpenAI-compatible base URL (e.g. `https://api.openai.com/v1`, or a local `http://127.0.0.1:11434/v1`) |
+| `HEXBANE_UPSTREAM_KEY` | upstream LLM key |
+| `HEXBANE_JUDGE_MODEL` | enables an LLM judge for low-confidence messages (recommended) |
 
 ## Adapting to your business
 Copy `policy_cad_assistant.json` and edit the following:

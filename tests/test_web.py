@@ -1,7 +1,7 @@
-"""Hermetic checks for the Gardu web app (stdlib only, no browser) - run by tests/run_all.py.
+"""Hermetic checks for the Hexbane web app (stdlib only, no browser) - run by tests/run_all.py.
 
 Checks what breaks a Pages deploy or the product promise:
-  * every asset referenced by index.html exists and is relative (Pages serves /gardu/)
+  * every asset referenced by index.html exists and is relative (Pages serves /hexbane/)
   * scripts load in dependency order, the service worker only caches files that exist
   * the manifest is valid and its icons exist
   * user text is never inserted as HTML (XSS guard)
@@ -113,16 +113,16 @@ sw_cached = re.findall(r'"([^"]+)"', shell_block.group(1)) if shell_block else [
 for needed in ("scan.js", "scanview.js", "rules.json"):
     check(needed in sw_cached, f"sw.js does not cache {needed} (the Scan page would break offline)")
 
-python_rules = json.loads((APP / "gardu" / "rules.json").read_text(encoding="utf-8"))
+python_rules = json.loads((APP / "hexbane" / "rules.json").read_text(encoding="utf-8"))
 web_rules = json.loads((WEB / "rules.json").read_text(encoding="utf-8"))
-check(python_rules == web_rules, "web/rules.json differs from gardu/rules.json - run tests/sync_rules.py")
+check(python_rules == web_rules, "web/rules.json differs from hexbane/rules.json - run tests/sync_rules.py")
 rule_ids = [rule["id"] for rule in python_rules["rules"]]
 check(len(rule_ids) == len(set(rule_ids)), "duplicate rule ids in rules.json")
 
 visible_html = re.sub(r"<script.*?</script>", "", index_html, flags=re.S)
 for old_name in ("Steward", "ScopeGuard"):
     check(old_name not in visible_html, f"index.html still shows the old name {old_name!r}")
-check("<title>Gardu" in index_html, "index.html title is not Gardu")
+check("<title>Hexbane" in index_html, "index.html title is not Hexbane")
 
 if failures:
     print("FAILED")

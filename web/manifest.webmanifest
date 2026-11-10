@@ -1,6 +1,6 @@
 {
-  "name": "Gardu - AI agent skill and tool guard",
-  "short_name": "Gardu",
+  "name": "Hexbane - AI agent skill and tool guard",
+  "short_name": "Hexbane",
   "description": "Check AI agent skills, MCP servers and tools before you load them; guard tool calls and chat while they run.",
   "start_url": "./",
   "scope": "./",

@@ -1,7 +1,7 @@
 """
-Gardu server - one drop-in guard for an AI assistant and its tools. Standard library only.
+Hexbane server - one drop-in guard for an AI assistant and its tools. Standard library only.
 
-    python server.py --policy policy_cad_assistant.json --port 8787      (or: python -m gardu serve)
+    python server.py --policy policy_cad_assistant.json --port 8787      (or: python -m hexbane serve)
 
 Three gates in one process:
     chat gate   POST /v1/check, /v1/chat/completions  keeps users on the assistant's mission (ex-ScopeGuard)
@@ -10,11 +10,11 @@ Three gates in one process:
                 the chat proxy applies it automatically to tool calls and tool results it relays
 
 Environment (all optional; the old SCOPEGUARD_* names still work):
-    GARDU_API_KEY       bearer key required on /v1/*  (your app -> Gardu)
-    GARDU_ADMIN_KEY     bearer key required on /api/* (dashboard; open it as /#key=...)
-    GARDU_UPSTREAM      OpenAI-compatible base URL, e.g. https://api.openai.com/v1
-    GARDU_UPSTREAM_KEY  key for the upstream LLM
-    GARDU_JUDGE_MODEL   model name -> enables the LLM judge for low-confidence messages
+    HEXBANE_API_KEY       bearer key required on /v1/*  (your app -> Hexbane)
+    HEXBANE_ADMIN_KEY     bearer key required on /api/* (dashboard; open it as /#key=...)
+    HEXBANE_UPSTREAM      OpenAI-compatible base URL, e.g. https://api.openai.com/v1
+    HEXBANE_UPSTREAM_KEY  key for the upstream LLM
+    HEXBANE_JUDGE_MODEL   model name -> enables the LLM judge for low-confidence messages
 """
 
 import argparse
@@ -35,19 +35,19 @@ from store import Store
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
-from gardu.scanner import scan_files  # noqa: E402  (package lives next to server/)
-from gardu.toolgate import check_call, check_output, load_policy as load_tool_policy, quarantine_notice  # noqa: E402
+from hexbane.scanner import scan_files  # noqa: E402  (package lives next to server/)
+from hexbane.toolgate import check_call, check_output, load_policy as load_tool_policy, quarantine_notice  # noqa: E402
 
 MAX_BODY_BYTES = 64 * 1024
 MAX_SCAN_BYTES = 4 * 1024 * 1024
 
 
 def env_value(env: dict, name: str) -> str:
-    """GARDU_<name>, falling back to the old SCOPEGUARD_<name> so existing setups keep working."""
-    return env.get("GARDU_" + name) or env.get("SCOPEGUARD_" + name, "")
+    """HEXBANE_<name>, falling back to the old SCOPEGUARD_<name> so existing setups keep working."""
+    return env.get("HEXBANE_" + name) or env.get("SCOPEGUARD_" + name, "")
 
 
-class GarduApp:
+class HexbaneApp:
     def __init__(self, policy_path: Path, db_path: Path, env: dict | None = None, tool_policy_path: Path | None = None):
         env = dict(os.environ if env is None else env)
         self.api_key = env_value(env, "API_KEY")
@@ -114,11 +114,11 @@ class GarduApp:
                     choice["finish_reason"] = "stop"
                     blocked = [d for d in decisions if d["decision"] == "deny"]
                     message["content"] = (message.get("content") or "") + (
-                        "\n[Gardu blocked a tool call: " + "; ".join(r["detail"] for d in blocked for r in d["reasons"][:1]) + "]")
+                        "\n[Hexbane blocked a tool call: " + "; ".join(r["detail"] for d in blocked for r in d["reasons"][:1]) + "]")
         return decisions
 
 
-ScopeGuardApp = GarduApp  # old name, kept for existing integrations
+ScopeGuardApp = HexbaneApp  # old name, kept for existing integrations
 
 
 def decision_payload(event_id: int, decision) -> dict:
@@ -156,14 +156,14 @@ def completion_response(model: str, text: str, guard_info: dict) -> dict:
             "finish_reason": "stop",
         }],
         "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-        "gardu": guard_info,
+        "hexbane": guard_info,
         "scopeguard": guard_info,
     }
 
 
-def make_handler(app: GarduApp):
+def make_handler(app: HexbaneApp):
     class Handler(BaseHTTPRequestHandler):
-        server_version = "Gardu/0.1"
+        server_version = "Hexbane/0.1"
 
         def log_message(self, format, *args):
             pass
@@ -266,7 +266,7 @@ def make_handler(app: GarduApp):
             if data is None:
                 return
             if data.get("stream"):
-                self.send_json(400, {"error": "streaming is not supported by Gardu yet; send stream=false"})
+                self.send_json(400, {"error": "streaming is not supported by Hexbane yet; send stream=false"})
                 return
             messages = data.get("messages")
             if not isinstance(messages, list) or not messages:
@@ -276,8 +276,8 @@ def make_handler(app: GarduApp):
             event_id, decision = app.guard(user, last_user_text(messages))
             info = decision_payload(event_id, decision)
             info["tool_results"] = app.gate_tool_results(messages)
-            headers = {"X-Gardu-Action": decision.action, "X-ScopeGuard-Action": decision.action}
-            model = str(data.get("model", "gardu"))
+            headers = {"X-Hexbane-Action": decision.action, "X-ScopeGuard-Action": decision.action}
+            model = str(data.get("model", "hexbane"))
 
             if not info["allowed"]:
                 self.send_json(200, completion_response(model, decision.reply, info), headers)
@@ -287,7 +287,7 @@ def make_handler(app: GarduApp):
                 data["messages"] = [{"role": "system", "content": decision.reply}] + messages
 
             if not app.upstream:
-                mock = f"[mock LLM - set GARDU_UPSTREAM to forward] Would answer: {last_user_text(messages)[:200]}"
+                mock = f"[mock LLM - set HEXBANE_UPSTREAM to forward] Would answer: {last_user_text(messages)[:200]}"
                 self.send_json(200, completion_response(model, mock, info), headers)
                 return
 
@@ -300,13 +300,13 @@ def make_handler(app: GarduApp):
                 with open_url(request, 120) as response:
                     upstream_payload = json.loads(response.read())
             except urllib.error.HTTPError as error:
-                self.send_json(502, {"error": f"upstream HTTP {error.code}", "gardu": info}, headers)
+                self.send_json(502, {"error": f"upstream HTTP {error.code}", "hexbane": info}, headers)
                 return
             except Exception as error:
-                self.send_json(502, {"error": f"upstream unreachable: {error}", "gardu": info}, headers)
+                self.send_json(502, {"error": f"upstream unreachable: {error}", "hexbane": info}, headers)
                 return
             info["tool_calls"] = app.gate_tool_calls(upstream_payload)
-            upstream_payload["gardu"] = info
+            upstream_payload["hexbane"] = info
             upstream_payload["scopeguard"] = info
             self.send_json(200, upstream_payload, headers)
 
@@ -396,22 +396,22 @@ def make_handler(app: GarduApp):
     return Handler
 
 
-def create_server(app: GarduApp, host: str = "127.0.0.1", port: int = 8787) -> ThreadingHTTPServer:
+def create_server(app: HexbaneApp, host: str = "127.0.0.1", port: int = 8787) -> ThreadingHTTPServer:
     return ThreadingHTTPServer((host, port), make_handler(app))
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Gardu - guard an AI assistant and its tools")
+    parser = argparse.ArgumentParser(description="Hexbane - guard an AI assistant and its tools")
     parser.add_argument("--policy", default=str(HERE / "policy_cad_assistant.json"), help="chat-gate mission policy")
-    parser.add_argument("--tool-policy", default=None, help="call-gate policy (default: gardu/policy_default.json)")
-    parser.add_argument("--db", default=str(HERE / "gardu.db"))
+    parser.add_argument("--tool-policy", default=None, help="call-gate policy (default: hexbane/policy_default.json)")
+    parser.add_argument("--db", default=str(HERE / "hexbane.db"))
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8787)
     args = parser.parse_args()
 
-    app = GarduApp(Path(args.policy), Path(args.db), tool_policy_path=Path(args.tool_policy) if args.tool_policy else None)
+    app = HexbaneApp(Path(args.policy), Path(args.db), tool_policy_path=Path(args.tool_policy) if args.tool_policy else None)
     server = create_server(app, args.host, args.port)
-    print(f"Gardu running: http://{args.host}:{args.port}/  (mission policy: {app.engine.policy['name']})")
+    print(f"Hexbane running: http://{args.host}:{args.port}/  (mission policy: {app.engine.policy['name']})")
     print("  chat gate: POST /v1/check, /v1/chat/completions | load gate: POST /v1/scan | "
           "call gate: POST /v1/tool-call, /v1/tool-output | dashboard at /")
     try:

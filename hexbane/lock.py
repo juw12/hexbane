@@ -1,7 +1,7 @@
 """Rug-pull protection: pin the exact skill files and tool descriptions you approved, then flag any change.
 
-`gardu lock PATH` writes gardu.lock.json. `gardu scan PATH --lock gardu.lock.json` reports GD801 for files or
-tools that changed since then and GD802 for new ones.
+`hexbane lock PATH` writes hexbane.lock.json. `hexbane scan PATH --lock hexbane.lock.json` reports HB801 for files or
+tools that changed since then and HB802 for new ones.
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ def tool_fingerprints(path: str, text: str) -> dict:
 
 def build_lock(root: Path) -> dict:
     files = collect_files(root)
-    lock = {"gardu_lock": LOCK_VERSION, "files": {}, "tools": {}}
+    lock = {"hexbane_lock": LOCK_VERSION, "files": {}, "tools": {}}
     for path, text in files:
         lock["files"][path] = digest(text)
         lock["tools"].update(tool_fingerprints(path, text))
@@ -42,8 +42,8 @@ def build_lock(root: Path) -> dict:
 
 def compare(lock: dict, files: list[tuple[str, str]]) -> list[Finding]:
     findings = []
-    changed_rule = RULES["by_id"]["GD801"]
-    new_rule = RULES["by_id"]["GD802"]
+    changed_rule = RULES["by_id"]["HB801"]
+    new_rule = RULES["by_id"]["HB802"]
 
     def add(rule, path, evidence):
         findings.append(Finding(rule=rule["id"], severity=rule["severity"], title=rule["title"], file=path, line=1,
@@ -69,6 +69,6 @@ def compare(lock: dict, files: list[tuple[str, str]]) -> list[Finding]:
 
 def load_lock(path: Path) -> dict:
     lock = json.loads(path.read_text(encoding="utf-8"))
-    if lock.get("gardu_lock") != LOCK_VERSION:
-        raise ValueError(f"{path} is not a Gardu lock file (version {LOCK_VERSION})")
+    if lock.get("hexbane_lock") != LOCK_VERSION:
+        raise ValueError(f"{path} is not a Hexbane lock file (version {LOCK_VERSION})")
     return lock

@@ -634,7 +634,7 @@ code {
   .footer a { display: inline-block; padding: 14px 0; }
 }
 
-/* ---------- Gardu scan page (load gate) ---------- */
+/* ---------- Hexbane scan page (load gate) ---------- */
 :root, :root[data-theme="dark"] { --sev-critical: #ff6b6b; --sev-high: #f59e4a; --sev-medium: #e8c252; --sev-low: #8b95b0; --pass: #3ccf86; }
 :root[data-theme="light"] { --sev-critical: #c4262e; --sev-high: #b85a10; --sev-medium: #8a6400; --sev-low: #5c6782; --pass: #17834b; }
 .brand-mark svg { display: block; color: var(--accent); }
@@ -724,4 +724,15 @@ a.gate:hover { border-color: var(--accent); }
   .topbar { position: static; gap: 10px; padding: 8px 16px; }
   .topbar .tabs { flex-wrap: nowrap; overflow-x: auto; width: 100%; scrollbar-width: none; }
   .topbar .tabs a { flex: 0 0 auto; }
+}
+
+/* copy-paste fixes */
+.copy-block { position: relative; margin: .4rem 0 .2rem; }
+.copy-block pre { margin: 0; padding: .6rem 5.5rem .6rem .7rem; background: var(--code-bg, rgba(127,127,127,.12)); border-radius: 8px; overflow-x: auto; white-space: pre; font-size: .82rem; }
+.copy-block .copy-btn { position: absolute; top: .4rem; right: .4rem; }
+.finding details.suppress { margin-top: .3rem; font-size: .85rem; }
+.finding details.suppress summary { cursor: pointer; color: var(--muted, #6b7280); }
+@media (max-width: 640px) {
+  .copy-block pre { padding-right: .7rem; padding-bottom: 2.6rem; }
+  .copy-block .copy-btn { top: auto; bottom: .4rem; }
 }

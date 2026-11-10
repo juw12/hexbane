@@ -1,4 +1,4 @@
-> Historical: planning notes from ScopeGuard, the project that became Gardu's chat gate.
+> Historical: planning notes from ScopeGuard, the project that became Hexbane's chat gate.
 
 # ScopeGuard v0.2 — Build plan
 

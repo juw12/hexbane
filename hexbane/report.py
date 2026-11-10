@@ -1,9 +1,10 @@
-"""Output formats for a Gardu scan report: text, json, sarif (GitHub code scanning) and markdown."""
+"""Output formats for a Hexbane scan report: text, json, sarif (GitHub code scanning) and markdown."""
 
 from __future__ import annotations
 
 import json
 
+from .fixes import snippet_for, suppression_for
 from .scanner import RULES, SEVERITY_ORDER
 
 SARIF_LEVEL = {"critical": "error", "high": "error", "medium": "warning", "low": "note", "info": "note"}
@@ -26,7 +27,7 @@ def to_json(report: dict) -> str:
 
 
 def to_text(report: dict) -> str:
-    lines = [f"Gardu {report['version']}: {VERDICT_LINE[report['verdict']]}",
+    lines = [f"Hexbane {report['version']}: {VERDICT_LINE[report['verdict']]}",
              f"{report['files_scanned']} files scanned; "
              + ", ".join(f"{count} {name}" for name, count in report["counts"].items() if count) or "no findings"]
     for finding in report["findings"]:
@@ -38,6 +39,9 @@ def to_text(report: dict) -> str:
             lines.append(f"  hidden text: {finding['hidden_text']}")
         lines.append(f"  why: {finding['why']}")
         lines.append(f"  fix: {finding['fix']}")
+        snippet = snippet_for(finding)
+        if snippet:
+            lines.extend("    " + row for row in snippet.split("\n"))
     for skipped in report.get("skipped", []):
         lines.append("")
         lines.append(f"[NOT SCANNED] {skipped['path']}: {skipped['reason']}")
@@ -45,7 +49,7 @@ def to_text(report: dict) -> str:
 
 
 def to_markdown(report: dict) -> str:
-    lines = [f"### Gardu: {VERDICT_LINE[report['verdict']]}", "",
+    lines = [f"### Hexbane: {VERDICT_LINE[report['verdict']]}", "",
              f"{report['files_scanned']} files scanned. "
              + (", ".join(f"**{count} {name}**" for name, count in report["counts"].items() if count) or "No findings."),
              ""]
@@ -55,6 +59,20 @@ def to_markdown(report: dict) -> str:
             evidence = finding["evidence"].replace("|", "\\|").replace("`", "'")[:120]
             lines.append(f"| {finding['severity']} | {finding['rule']} {finding['title']} | "
                          f"`{finding['file']}:{finding['line']}` | {evidence} |")
+    fixes = []
+    seen = set()
+    for finding in report["findings"]:
+        snippet = snippet_for(finding)
+        if snippet and (finding["rule"], finding["file"]) not in seen:
+            seen.add((finding["rule"], finding["file"]))
+            fixes += ["", f"**{finding['rule']} in `{finding['file']}`:** {finding['fix']}", "", "```", snippet, "```"]
+    if fixes:
+        lines += ["", "#### How to fix"] + fixes
+    if report["findings"]:
+        first = report["findings"][0]
+        lines += ["", "<details><summary>False alarm? Mark it as reviewed</summary>", "",
+                  "Put this on the line above the finding (example for the first one):", "", "```",
+                  suppression_for(first), "```", "", "</details>"]
     for skipped in report.get("skipped", []):
         lines.append(f"\nNot scanned: `{skipped['path']}` ({skipped['reason']})")
     return "\n".join(lines) + "\n"
@@ -71,7 +89,7 @@ def to_sarif(report: dict) -> str:
             "shortDescription": {"text": rule["title"]},
             "fullDescription": {"text": rule["why"]},
             "help": {"text": rule["fix"], "markdown": rule["fix"]},
-            "helpUri": (rule.get("refs") or ["https://github.com/juw12/gardu"])[0],
+            "helpUri": (rule.get("refs") or ["https://github.com/juw12/hexbane"])[0],
             "properties": {"security-severity": SECURITY_SCORE[rule["severity"]], "tags": ["security", rule["category"]]},
         })
     results = []
@@ -93,8 +111,8 @@ def to_sarif(report: dict) -> str:
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
         "version": "2.1.0",
         "runs": [{
-            "tool": {"driver": {"name": "Gardu", "version": report["version"],
-                                "informationUri": "https://github.com/juw12/gardu", "rules": rules}},
+            "tool": {"driver": {"name": "Hexbane", "version": report["version"],
+                                "informationUri": "https://github.com/juw12/hexbane", "rules": rules}},
             "results": results,
         }],
     }

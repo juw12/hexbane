@@ -1,5 +1,5 @@
 """
-Gardu chat-gate engine (from ScopeGuard): decides whether a message fits a business AI assistant's mission.
+Hexbane chat-gate engine (from ScopeGuard): decides whether a message fits a business AI assistant's mission.
 
 Pure Python standard library. Layers, cheapest first:
     1. Abuse / jailbreak patterns            -> BLOCK

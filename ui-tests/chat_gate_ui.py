@@ -1,4 +1,4 @@
-"""Browser suite for the Gardu chat gate pages (from ScopeGuard) (headless Microsoft Edge via Playwright).
+"""Browser suite for the Hexbane chat gate pages (from ScopeGuard) (headless Microsoft Edge via Playwright).
 
     python ui-tests/chat_gate_ui.py            # run, write ui-tests/last-results.txt
     python ui-tests/chat_gate_ui.py --shots    # also refresh docs/screenshots/

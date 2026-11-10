@@ -1,4 +1,4 @@
-// Gardu web app. Scan page (load gate): check skills, MCP configs and tools before loading them.
+// Hexbane web app. Scan page (load gate): check skills, MCP configs and tools before loading them.
 // Chat gate pages (from ScopeGuard): try the mission guard as different users, watch the dashboard, edit the
 // policy, measure accuracy, copy integration snippets. Local-first: nothing leaves the browser.
 (function () {
@@ -20,8 +20,8 @@
     THROTTLE: "Off-topic allowance used up for today.",
     BLOCK: "Jailbreak / prompt-injection attempt.",
   };
-  const SOURCE_URL = "https://github.com/juw12/gardu";
-  const SERVER_SOURCE_URL = "https://github.com/juw12/gardu/tree/main/server";
+  const SOURCE_URL = "https://github.com/juw12/hexbane";
+  const SERVER_SOURCE_URL = "https://github.com/juw12/hexbane/tree/main/server";
 
   const state = {
     templates: {},
@@ -315,7 +315,7 @@
     if (!chat.length) {
       log.appendChild(
         h("div", { class: "chat-empty" }, [
-          h("p", { text: `You are chatting with “${policy.name}”. Gardu's chat gate sits in front of it.` }),
+          h("p", { text: `You are chatting with “${policy.name}”. Hexbane's chat gate sits in front of it.` }),
           h("p", { text: "Ask something on-mission, something unrelated, or try to jailbreak it." }),
         ])
       );
@@ -337,7 +337,7 @@
             },
           },
           [
-            h("div", { class: "who" }, [pill(decision.action), " Gardu"]),
+            h("div", { class: "who" }, [pill(decision.action), " Hexbane"]),
             botText(decision),
             STOPPED.has(decision.action) ? h("div", { class: "meta", text: "Your AI was not called." }) : null,
           ]
@@ -465,7 +465,7 @@
       event.id, new Date(event.ts).toISOString(), event.policyId, event.user, event.message, event.action,
       event.label, event.uncertain, event.reason, event.costSaved, event.reviewed || "",
     ]);
-    download(`gardu-log-${activeId()}.csv`, [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n"), "text/csv");
+    download(`hexbane-log-${activeId()}.csv`, [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n"), "text/csv");
   }
 
   function renderDashboard() {
@@ -523,7 +523,7 @@
           type: "button",
           text: "Export JSON",
           disabled: !events.length,
-          onclick: () => download(`gardu-log-${activeId()}.json`, JSON.stringify(events, null, 2), "application/json"),
+          onclick: () => download(`hexbane-log-${activeId()}.json`, JSON.stringify(events, null, 2), "application/json"),
         }),
         h("button", {
           type: "button",
@@ -896,27 +896,27 @@
   function renderIntegrate() {
     const policy = activePolicy();
     const code = (text) => h("pre", {}, [h("code", { text })]);
-    const content = card("Put Gardu in front of your real agent", "span12 prose", [
-      h("p", { text: "Gardu has three gates. The Scan page is the load gate and runs in your browser. The call gate and the chat gate run in the self-hosted Gardu server (Python standard library only, no installs) between your app, your LLM and your tools. The browser and the server use the same rules and the same policy JSON." }),
+    const content = card("Put Hexbane in front of your real agent", "span12 prose", [
+      h("p", { text: "Hexbane has three gates. The Scan page is the load gate and runs in your browser. The call gate and the chat gate run in the self-hosted Hexbane server (Python standard library only, no installs) between your app, your LLM and your tools. The browser and the server use the same rules and the same policy JSON." }),
       h("h3", { text: "1. Load gate in CI: scan skills and MCP configs on every pull request" }),
-      code(`# .github/workflows/gardu.yml\non: [pull_request]\npermissions: { contents: read, security-events: write }\njobs:\n  gardu:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: juw12/gardu@v0.1.0\n        with:\n          path: .            # skills, .cursor/, .vscode/mcp.json, tools.json ...\n          fail-on: high      # findings show up in the Security tab (SARIF)`),
-      code(`# or locally\npython -m gardu scan ~/.claude/skills --fail-on high\npython -m gardu lock ./my-mcp-tools          # pin what you approved\npython -m gardu scan ./my-mcp-tools --lock gardu.lock.json   # flags rug pulls`),
+      code(`# .github/workflows/hexbane.yml\non: [pull_request]\npermissions: { contents: read, security-events: write }\njobs:\n  hexbane:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: juw12/hexbane@v0.1.0\n        with:\n          path: .            # skills, .cursor/, .vscode/mcp.json, tools.json ...\n          fail-on: high      # findings show up in the Security tab (SARIF)`),
+      code(`# or locally\npython -m hexbane scan ~/.claude/skills --fail-on high\npython -m hexbane lock ./my-mcp-tools          # pin what you approved\npython -m hexbane scan ./my-mcp-tools --lock hexbane.lock.json   # flags rug pulls`),
       h("h3", { text: "2. Start the server (call gate + chat gate)" }),
       h("ol", {}, [
         h("li", {}, ["Design and test your chat policy on the Chat gate page, then ", h("button", { class: "small", type: "button", text: "download the policy JSON", onclick: () => download(`${activeId()}.json`, JSON.stringify(exportablePolicy(), null, 2), "application/json") }), "."]),
-        h("li", {}, ["Get the server from ", h("a", { href: SERVER_SOURCE_URL, text: "juw12/gardu/server", rel: "noopener" }), " and start it:"]),
+        h("li", {}, ["Get the server from ", h("a", { href: SERVER_SOURCE_URL, text: "juw12/hexbane/server", rel: "noopener" }), " and start it:"]),
       ]),
-      code(`python -m gardu serve --policy ${activeId()}.json --port 8787\n# optional: GARDU_API_KEY, GARDU_ADMIN_KEY, GARDU_UPSTREAM, GARDU_UPSTREAM_KEY, GARDU_JUDGE_MODEL\n# optional: --tool-policy my-tools.json   (allow / ask / deny lists, protected paths, network allow list)\n# dashboard: http://127.0.0.1:8787/`),
+      code(`python -m hexbane serve --policy ${activeId()}.json --port 8787\n# optional: HEXBANE_API_KEY, HEXBANE_ADMIN_KEY, HEXBANE_UPSTREAM, HEXBANE_UPSTREAM_KEY, HEXBANE_JUDGE_MODEL\n# optional: --tool-policy my-tools.json   (allow / ask / deny lists, protected paths, network allow list)\n# dashboard: http://127.0.0.1:8787/`),
       h("h3", { text: "3. Call gate: check each tool call before your agent runs it" }),
       code(`const res = await fetch("http://127.0.0.1:8787/v1/tool-call", {\n  method: "POST",\n  headers: { "Content-Type": "application/json", Authorization: "Bearer " + APP_KEY },\n  body: JSON.stringify({ tool: call.name, arguments: call.args }),\n});\nconst { decision, reasons } = await res.json();   // "allow" | "ask" | "deny"\nif (decision === "deny") return refuse(reasons);\nif (decision === "ask" && !(await askUser(call, reasons))) return refuse(reasons);\nreturn runTool(call);`),
       code(`# and each tool result before the model reads it (web pages, files, API replies)\ncurl -s http://127.0.0.1:8787/v1/tool-output -H "Authorization: Bearer $APP_KEY" \\\n  -d '{"content": "<page text>"}'     # -> {"decision": "quarantine" | "pass", "findings": [...]}`),
       h("h3", { text: "4. Or use the drop-in OpenAI-compatible proxy (change one URL)" }),
-      code(`from openai import OpenAI\n\nclient = OpenAI(base_url="http://127.0.0.1:8787/v1", api_key=APP_KEY)\nreply = client.chat.completions.create(model="gpt-4o-mini", user=user_id, messages=messages, tools=tools)\n# Chat gate: off-mission requests come back as a polite redirect; your LLM is never called.\n# Call gate: tool results with injected instructions are replaced before the LLM sees them,\n#            and denied tool calls are removed from the reply (see reply.gardu.tool_calls).`),
+      code(`from openai import OpenAI\n\nclient = OpenAI(base_url="http://127.0.0.1:8787/v1", api_key=APP_KEY)\nreply = client.chat.completions.create(model="gpt-4o-mini", user=user_id, messages=messages, tools=tools)\n# Chat gate: off-mission requests come back as a polite redirect; your LLM is never called.\n# Call gate: tool results with injected instructions are replaced before the LLM sees them,\n#            and denied tool calls are removed from the reply (see reply.hexbane.tool_calls).`),
       h("h3", { text: "Good to know" }),
       h("ul", {}, [
         h("li", { text: `Current chat mission: “${policy.mission}”. Keep 20–30 examples per column for best results.` }),
-        h("li", { text: "Gardu matches patterns and wording, not meaning. A determined attacker can phrase around any rule list; treat PASS as 'nothing known-bad found', not as proof of safety." }),
-        h("li", { text: "The chat gate's local classifier is TF-IDF; enable the optional LLM judge (GARDU_JUDGE_MODEL) for low-confidence messages in production." }),
+        h("li", { text: "Hexbane matches patterns and wording, not meaning. A determined attacker can phrase around any rule list; treat PASS as 'nothing known-bad found', not as proof of safety." }),
+        h("li", { text: "The chat gate's local classifier is TF-IDF; enable the optional LLM judge (HEXBANE_JUDGE_MODEL) for low-confidence messages in production." }),
         h("li", { text: "The proxy does not stream yet (stream=false). Old SCOPEGUARD_* environment variables still work." }),
       ]),
     ]);
@@ -926,7 +926,7 @@
   // ---------- routing ----------
 
   function renderScan() {
-    window.GarduScanView.render(document.getElementById("view"), { h, card, toast, download });
+    window.HexbaneScanView.render(document.getElementById("view"), { h, card, toast, download });
   }
 
   const VIEWS = { scan: renderScan, try: renderTry, dashboard: renderDashboard, policy: renderPolicy, accuracy: renderAccuracy, integrate: renderIntegrate };
@@ -989,7 +989,7 @@
     applyTheme();
     renderView();
     window.ScopeGuardApp = { state, guard, evaluate, selectPolicy, ready: true };
-    window.GarduApp = window.ScopeGuardApp;
+    window.HexbaneApp = window.ScopeGuardApp;
 
     // Offline app shell on the real site only; local test servers stay cache-free.
     if ("serviceWorker" in navigator && location.protocol === "https:") {

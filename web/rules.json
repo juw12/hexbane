@@ -1,5 +1,5 @@
 {
-  "version": "0.2.2",
+  "version": "0.2.3",
   "invisible": [
     8203,
     8204,
@@ -191,7 +191,8 @@
       "fix": "Move any real instructions into visible text, or delete the comment.",
       "refs": [
         "https://genai.owasp.org/llmrisk/llm01-prompt-injection/"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - delete the HTML comment, or move any real instructions into visible text\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB105",
@@ -202,7 +203,8 @@
       "fix": "Replace the blob with the plain text it encodes, or explain in a visible comment why it must be encoded.",
       "refs": [
         "https://genai.owasp.org/llmrisk/llm01-prompt-injection/"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - replace the base64 blob with the plain text Hexbane decoded under the finding\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB106",
@@ -213,7 +215,8 @@
       "fix": "Rewrite the text in plain letters or delete it. Someone took care to hide it, so treat the whole file as untrusted until you know who wrote it.",
       "refs": [
         "https://www.unicode.org/reports/tr39/"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - rewrite the disguised text in plain letters, or delete it\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB201",
@@ -229,7 +232,8 @@
         "\\b(ignore|disregard|forget|override)\\b[^.\\n]{0,40}\\b(previous|prior|above|earlier|preceding|all|any|your|system)\\b[^.\\n]{0,24}\\b(instructions?|rules|prompts?|guidelines|directives)\\b",
         "\\bnew\\s+(system\\s+)?(instructions|prompt)\\s*:",
         "\\byou\\s+are\\s+now\\s+(in\\s+)?(developer|dan|jailbreak|god|unrestricted)\\s+mode\\b"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - remove the sentence that overrides the agent's instructions\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB202",
@@ -250,7 +254,8 @@
         "\\b(the\\s+)?user\\s+(must|should)\\s+not\\s+(know|see|notice|be\\s+told)\\b",
         "\\b(keep|stay)\\s+(this|it)\\s+(secret|hidden|confidential)\\s+from\\b",
         "\\b(secretly|covertly|silently)\\s+(send|upload|forward|copy|exfiltrate|read|collect|post|include)\\b"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - remove the wording that hides the action from the user\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB203",
@@ -269,7 +274,8 @@
       "patterns": [
         "<\\s*/?\\s*(IMPORTANT|SYSTEM|ADMIN|INSTRUCTIONS?|HIDDEN|SECRET)\\s*>",
         "\\[\\s*(SYSTEM|ADMIN)\\s*(MESSAGE|NOTE|INSTRUCTIONS?|OVERRIDE)?\\s*\\]"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - drop the fake system tag and keep a plain description\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB204",
@@ -286,7 +292,8 @@
         "\\b(change|replace|override|rewrite)\\s+the\\s+(recipient|destination|address|endpoint|url|receiver)\\b",
         "\\bwhen\\s+this\\s+tool\\s+is\\s+(available|present|installed|loaded)\\b",
         "\\bthe\\s+actual\\s+(recipient|destination|address)\\b"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - remove instructions about other tools; a description only describes its own tool\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB205",
@@ -319,7 +326,8 @@
         "\\b(pass|include|put|append|insert|copy|send|add)\\b[^.\\n]{0,60}\\b(system\\s+prompt|conversation\\s+history|chat\\s+history|previous\\s+messages|full\\s+conversation|api[_ -]?keys?|credentials|passwords?|private\\s+keys?|ssh\\s+keys?|mcp\\.json|\\.env)\\b[^.\\n]{0,40}\\b(as|in|into|inside)\\s+(the\\s+)?[`'\\\"]?[\\w-]+[`'\\\"]?\\s*(parameter|argument|param|field)\\b",
         "\\b(read|cat|open|load)\\b[^.\\n]{0,40}(~|\\$HOME|%USERPROFILE%)[/\\\\][^\\s]*[^.\\n]{0,60}\\b(pass|send|include|put|append|add)\\b",
         "\\b(pass|send|include|put|append)\\s+(its|their|the\\s+file'?s?)\\s+contents?\\s+(as|in|into)\\b"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - remove the request for secrets, the system prompt or the conversation\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB301",
@@ -337,7 +345,8 @@
         "\\.git-credentials\\b|[/\\\\]\\.netrc\\b|\\bwallet\\.dat\\b|/etc/(shadow|sudoers)\\b",
         "\\bLogin\\s+Data\\b|\\bcookies\\.sqlite\\b|\\blogins\\.json\\b|\\bKeychains?[/\\\\]",
         "[/\\\\]\\.docker[/\\\\]config\\.json\\b|[/\\\\]\\.config[/\\\\]gh[/\\\\]hosts\\.yml\\b"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - remove the reference to the credential file, or narrow the tool's scope so it cannot reach it\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB310",
@@ -412,7 +421,8 @@
         "discord(app)?\\.com/api/webhooks|hooks\\.slack\\.com/services|webhook\\.site|requestbin|pipedream\\.net",
         "[\\w-]+\\.ngrok(-free)?\\.(io|app|dev)|pastebin\\.com/api|transfer\\.sh|api\\.telegram\\.org/bot",
         "\\.oast\\.(fun|me|pro|live|site|online)\\b|\\binteract\\.sh\\b|burpcollaborator\\.net|canarytokens\\.com"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - remove the drop-box endpoint, or state in the description exactly what is sent and why\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB403",
@@ -435,7 +445,8 @@
         "\\b(Invoke-WebRequest|Invoke-RestMethod|iwr|irm)\\b[^\\n]{0,160}-InFile\\b",
         "\\brequests\\.(post|put)\\([^)\\n]{0,160}\\bfiles\\s*=",
         "\\bnc(at)?\\s+(-\\w+\\s+)*[\\w.-]+\\s+\\d{2,5}\\s*<"
-      ]
+      ],
+      "snippet": "# check {file}:{line} - the upload target and the file must be what the skill's description promises\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB404",
@@ -453,7 +464,8 @@
         "\\bmkfs(\\.\\w+)?\\s+/dev/|\\bformat\\s+[a-zA-Z]:\\s*/[qQyY]",
         "\\bdd\\s+if=[^\\n]{0,60}of=/dev/(sd|nvme|disk|hd)",
         ":\\(\\)\\s*\\{\\s*:\\s*\\|\\s*:\\s*&\\s*\\}\\s*;\\s*:"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - remove the destructive command, or narrow it to a folder the skill created\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB405",
@@ -470,7 +482,8 @@
         "\\bcrontab\\s+-[a-z]*\\s*[^\\n]*|\\(crontab\\s+-l",
         "\\blaunchctl\\s+(load|bootstrap)\\b|\\bsystemctl\\s+(--user\\s+)?enable\\b",
         ">>\\s*[\\\"']?(~|\\$HOME)/\\.(bashrc|zshrc|profile|bash_profile)\\b"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - remove the persistence step, or document it in the description so the user knows\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB501",
@@ -555,7 +568,8 @@
       "fix": "Keep descriptions short and factual; move documentation elsewhere.",
       "refs": [
         "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - shorten the tool description to a few factual sentences\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB602",
@@ -566,7 +580,8 @@
       "fix": "Remove the parameter, or make its purpose explicit and narrow.",
       "refs": [
         "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - remove the side-channel parameter, or make its purpose explicit and narrow\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB603",
@@ -577,7 +592,8 @@
       "fix": "Describe only this tool.",
       "refs": [
         "https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"
-      ]
+      ],
+      "snippet": "# edit {file}:{line} - describe only this tool; drop the reference to the other tool\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB701",
@@ -588,7 +604,8 @@
       "fix": "Either remove the capability or say in the description what it does and why.",
       "refs": [
         "https://modelcontextprotocol.io/specification/draft/basic/security_best_practices"
-      ]
+      ],
+      "snippet": "# edit {file} - say in the description what the skill does with this capability and why, or remove it\nhexbane scan {file}   # re-scan until the finding is gone"
     },
     {
       "id": "HB801",

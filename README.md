@@ -10,7 +10,7 @@ shows you the hidden text in plain words, and hands you the fix. Then it keeps w
 **Try it now:** <https://juw12.github.io/hexbane/> - paste or drop a `SKILL.md`, `AGENTS.md`, `.cursorrules`, `mcp.json`,
 tool list or a whole skill folder. It runs in your browser; your files are never uploaded. Works on a phone.
 
-![Hexbane decoding disguised instructions in a skill](docs/screenshots/scan-disguised-dark.png)
+![Hexbane decoding disguised instructions in a skill, with the copyable fix command for each finding](docs/screenshots/scan-disguised-dark.png)
 
 A base64 payload (HB105) in an MCP config - Hexbane decodes the blob and shows the hidden instructions
 under the finding, in the web app and in every CLI report format:
@@ -28,8 +28,10 @@ Also in [light theme](docs/screenshots/scan-fail-light.png) and [on a phone](doc
 | **Call gate** | every tool call and tool result at run time | `allow` / `ask` / `deny` per call (deny `rm -rf /`, reads of `~/.ssh`, pipes to a shell, unknown hosts); quarantines tool results that carry injected instructions |
 | **Chat gate** | every user message | keeps a business assistant on its mission: allow, steer back, redirect, throttle off-topic use, block jailbreaks |
 
-Every finding comes with **why it matters**, a **copy-paste fix** for that exact file and line, and a ready-made
-**"reviewed, it's fine"** suppression when it is a false alarm. `hexbane fix` strips invisible characters for you.
+Every finding comes with **why it matters**, a **copyable fix command** for that exact file and line (all 32 rules
+carry one - the web Scan page shows it with a copy button on every finding, and a test fails if a rule loses its fix),
+and a ready-made **"reviewed, it's fine"** suppression when it is a false alarm. `hexbane fix` strips invisible
+characters for you.
 
 Same rules everywhere: browser, CLI, GitHub Action (SARIF into Code scanning), HTTP server and an OpenAI-compatible proxy.
 The browser and Python scanners give identical findings on every test corpus.
@@ -73,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: juw12/hexbane@v0.2.2
+      - uses: juw12/hexbane@v0.2.3
         with:
           path: .
           fail-on: high

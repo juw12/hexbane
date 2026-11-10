@@ -50,15 +50,19 @@ def main() -> int:
             page.wait_for_selector("#scan-verdict")
             page.screenshot(path=str(OUT / f"scan-fail-{theme}.png"), full_page=True)
             if theme == "dark":
-                # Disguised text: the decoded instruction and the copyable fix are shown.
+                # Disguised text: the decoded instruction and a copyable fix command per finding are shown.
                 page.click('button[data-sample="disguised"]')
                 page.wait_for_selector("text=Disguised text")
                 page.screenshot(path=str(OUT / "scan-disguised-dark.png"), full_page=True)
+                # Copy as Markdown must not throw (regression guard: it builds the fix command lines).
+                page.click("button:has-text('Copy as Markdown')")
+                page.wait_for_timeout(200)
                 # Base64 payload (HB105): the decoded content is shown under the finding.
                 page.click('button[data-sample="base64"]')
                 page.wait_for_selector(".hidden-text")
                 page.screenshot(path=str(OUT / "scan-base64-dark.png"), full_page=True)
             page.close()
+        # Phone (390px): one-column stacking, the phone layout statement and a copyable fix command.
         phone = browser.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2, color_scheme="dark")
         phone.on("pageerror", lambda e: errors.append(str(e)))
         phone.goto(base + "#/scan")

@@ -171,6 +171,9 @@
         + "Hexbane looks for hidden instructions, tool poisoning, secret theft, download-and-run commands, risky MCP settings and skills that do more than they say. "
         + "It runs in this browser; your files are not uploaded." }),
       gates,
+      h("p", { class: "muted small phone-note", id: "phone-layout-note", text: "Phone layout: below 860px everything stacks in one column "
+        + "(the three gates, the paste box, the drop zone, then the verdict and each finding with its copyable fix command); "
+        + "below 640px the copy buttons sit under the code blocks so they never cover the text." }),
     ]);
 
     const nameInput = h("input", { id: "scan-name", type: "text", value: state.pasteName, "aria-label": "File name (decides how the text is read)", spellcheck: "false" });
@@ -316,6 +319,17 @@
       return h("div", { class: "copy-block" }, [h("pre", {}, [h("code", { text })]), button]);
     }
 
+    function toMarkdown(report) {
+      const lines = ["### Hexbane: " + report.verdict + " - " + VERDICT_TEXT[report.verdict][0], ""];
+      for (const f of report.findings) {
+        lines.push("- **" + f.severity + "** " + f.rule + " " + f.title + " at `" + f.file + ":" + f.line + "` - " + f.evidence.replace(/`/g, "'"));
+        if (f.hidden_text) lines.push("  - decoded: " + f.hidden_text);
+        const snippet = fixSnippet(f);
+        if (snippet) lines.push("  - fix command: " + snippet.split("\n").join(" \n    "));
+      }
+      return lines.join("\n") + "\n";
+    }
+
     function findingItem(f) {
       return h("li", { class: "finding sev-" + f.severity }, [
         h("div", { class: "finding-head" }, [
@@ -328,7 +342,7 @@
         f.hidden_text ? h("div", { class: "hidden-text" }, [h("span", { class: "hidden-label", text: "Hexbane decoded the hidden text" }), h("code", { text: f.hidden_text })]) : null,
         h("p", { class: "why" }, [h("span", { class: "k", text: "Why it matters " }), f.why]),
         h("p", { class: "fix" }, [h("span", { class: "k", text: "Fix " }), f.fix]),
-        fixSnippet(f) ? copyBlock("Copy fix", fixSnippet(f)) : null,
+        fixSnippet(f) ? copyBlock("Copy fix command", fixSnippet(f)) : null,
         h("details", { class: "suppress" }, [
           h("summary", { text: "False alarm? Mark it as reviewed" }),
           copyBlock("Copy", suppressionFor(f)),
@@ -356,15 +370,6 @@
     container.replaceChildren(intro, input, resultsHost, rulesCard);
     showResults();
     ensureRules().catch((error) => toast("Could not load the rules: " + error.message));
-  }
-
-  function toMarkdown(report) {
-    const lines = ["### Hexbane: " + report.verdict + " - " + VERDICT_TEXT[report.verdict][0], ""];
-    for (const f of report.findings) {
-      lines.push("- **" + f.severity + "** " + f.rule + " " + f.title + " at `" + f.file + ":" + f.line + "` - " + f.evidence.replace(/`/g, "'"));
-      if (f.hidden_text) lines.push("  - decoded: " + f.hidden_text);
-    }
-    return lines.join("\n") + "\n";
   }
 
   window.HexbaneScanView = { render, runScan, samples: Object.keys(SAMPLES), get report() { return state.report; } };

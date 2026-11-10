@@ -66,3 +66,17 @@ Note: the archived judge outputs (docs/hone/v0.json to v3.json) have the product
   the words "Hexbane decodes the blob and shows the hidden instructions".
 - Verified: CLI text/md/json/sarif all show the decoded payload on the fixture; 3/3 hermetic suites pass;
   screenshots 0 JS errors.
+
+## Round 5 (v0.2.3): copyable fix command per finding + phone layout statement on the Scan page
+
+- Closes the remaining v1 council fix ideas "copyable fixes, mobile statement" (v1.json C1 note, round-2 table).
+- 17 of 32 rules had no fix command, so those findings had no "Copy fix" button and the CLI "How to fix" section
+  skipped them. Every rule in `hexbane/rules.json` now carries a `snippet` (edit instruction for the exact
+  file:line + a `hexbane scan` re-scan to verify), so every finding in the web Scan page shows a **Copy fix
+  command** block and the CLI text/markdown reports cover every finding. New hermetic check in `tests/test_web.py`:
+  a rule without a fix command fails the suite.
+- Scan page now states its phone layout in the hero (`#phone-layout-note`): below 860px the page stacks in one
+  column (gates, paste, drop zone, verdict, findings); below 640px the copy buttons sit under the code blocks.
+  The statement matches the CSS breakpoints it describes.
+- Web "Copy as Markdown" report now includes the fix command per finding (parity with the CLI markdown report).
+- Version bumped 0.2.2 -> 0.2.3 (rules.json is the single source for `__version__`, web copy and Action pin).

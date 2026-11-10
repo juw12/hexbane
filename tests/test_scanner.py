@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 from hexbane import report as formats  # noqa: E402
 from hexbane.lock import build_lock, compare  # noqa: E402
 from hexbane.fixes import fix_path, snippet_for, strip_invisible, suppression_for  # noqa: E402
-from hexbane.scanner import collect_files, fold, scan_files, scan_text, strip_hidden  # noqa: E402
+from hexbane.scanner import RULES, collect_files, fold, scan_files, scan_text, strip_hidden  # noqa: E402
 from hexbane.toolgate import check_call, check_output, load_policy  # noqa: E402
 
 TAG = lambda s: "".join(chr(0xE0000 + ord(c)) for c in s)  # noqa: E731
@@ -319,7 +319,13 @@ class FixTests(unittest.TestCase):
     def test_snippets_and_suppressions(self):
         finding = {"rule": "HB101", "file": "skills/a/SKILL.md", "line": 4}
         self.assertEqual(snippet_for(finding), "hexbane fix skills/a/SKILL.md --write")
-        self.assertIsNone(snippet_for({"rule": "HB201", "file": "x.md", "line": 1}))
+        # Every rule must offer a copyable fix command for the exact finding (web "Copy fix command"
+        # button + CLI "How to fix" section are driven by this), with the placeholders filled in.
+        for rule in RULES["rules"]:
+            snippet = snippet_for({"rule": rule["id"], "file": "x.md", "line": 7})
+            self.assertTrue(snippet, f"rule {rule['id']} has no fix command")
+            self.assertNotIn("{file}", snippet)
+            self.assertNotIn("{line}", snippet)
         self.assertTrue(suppression_for(finding).startswith("<!-- hexbane-ignore-next-line: HB101"))
         self.assertTrue(suppression_for({"rule": "HB401", "file": "a.sh", "line": 1}).startswith("# hexbane"))
         self.assertTrue(suppression_for({"rule": "HB401", "file": "a.ts", "line": 1}).startswith("// hexbane"))

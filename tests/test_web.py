@@ -118,6 +118,12 @@ web_rules = json.loads((WEB / "rules.json").read_text(encoding="utf-8"))
 check(python_rules == web_rules, "web/rules.json differs from hexbane/rules.json - run tests/sync_rules.py")
 rule_ids = [rule["id"] for rule in python_rules["rules"]]
 check(len(rule_ids) == len(set(rule_ids)), "duplicate rule ids in rules.json")
+# Every finding must offer a copyable fix command (the web "Copy fix command" button and the
+# CLI "How to fix" section are both driven by this field); a rule without one would leave a
+# finding with no concrete way to fix it.
+for rule in python_rules["rules"]:
+    snippet = rule.get("snippet")
+    check(isinstance(snippet, str) and snippet.strip(), f"rule {rule['id']} has no fix command (snippet) - every finding must offer one")
 
 visible_html = re.sub(r"<script.*?</script>", "", index_html, flags=re.S)
 for old_name in ("Steward", "ScopeGuard"):

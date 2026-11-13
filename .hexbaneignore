@@ -5,6 +5,8 @@ web/rules.json
 web/scan.js
 web/scanview.js
 corpus/
+# Benchmark baselines: the keyword baseline lists injection phrases to search for
+bench/baselines/
 tests/
 ui-tests/
 server/tests.py

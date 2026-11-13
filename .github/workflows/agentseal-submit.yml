@@ -1,0 +1,34 @@
+name: Submit to AgentSeal registry
+
+# Sends a public repo to AgentSeal's MCP registry for an independent security scan
+# (POST https://agentseal.org/api/v1/mcp/intel/submit, the same call their agentseal-mcp-intel
+# client makes). Runs on GitHub's runners because some networks block agentseal.org.
+
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: "Space-separated GitHub URLs to submit"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit and show the response
+        env:
+          PACKAGES: ${{ inputs.packages }}
+        run: |
+          set -u
+          for package in $PACKAGES; do
+            echo "== $package"
+            body=$(jq -n --arg name "$package" '{package_name: $name, package_type: "remote"}')
+            curl -sS --max-time 60 -X POST https://agentseal.org/api/v1/mcp/intel/submit \
+              -H "Content-Type: application/json" \
+              -H "User-Agent: juw12-registry-submit/1.0" \
+              -H "X-AgentSeal-Client: mcp-intel" \
+              -d "$body" -w "\nHTTP %{http_code}\n"
+          done

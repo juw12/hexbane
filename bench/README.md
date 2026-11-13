@@ -19,6 +19,15 @@ Python 3.10+, standard library only. `{path}` is replaced by one case folder per
 |---|---|---|---|---|---|
 | hexbane 0.2.4 | 11/11 | 0/5 | 65/65 | 23/24 | 1/7 |
 | keyword baseline (`bench/baselines/keyword_grep.py`) | 0/11 | 0/5 | 3/65 | 4/24 | 0/7 |
+| Cisco mcp-scanner 4.8.7, YARA analyzer only (`bench/adapters/cisco_yara.py`) | 1/11 | 0/5 | 6/65 | 1/24 | 0/7 |
+| same, only the 26 cases it can read (MCP tool lists) | 1/2 | 0/1 | 6/18 | 1/4 | 0/1 |
+
+Cisco's scanner was run on GitHub's runners by `.github/workflows/bench-others.yml` (offline YARA analyzer, no
+API key; its LLM and API analyzers were not run, and they may catch more). Its static mode reads MCP tool lists
+only, so configs, skills and rule files count as not flagged - the second row shows the score on the cases it
+can read. Two runs gave identical results. Not run: Snyk agent-scan (needs a Snyk account token and sends the
+tool data to Snyk's API) and mcp-shield 1.0.4 (it starts every server listed in a config to read its tools -
+a probe run launched the cases' `npx` packages - so running it on attack cases would execute them).
 
 Raw results: `bench/results/*.json`. CI re-runs hexbane on every push and fails if it catches fewer cases or
 raises more false alarms than the committed result.

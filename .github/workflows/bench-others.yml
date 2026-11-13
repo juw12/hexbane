@@ -34,22 +34,3 @@ jobs:
         with:
           name: hexbench-others
           path: out/
-
-  mcp-shield-probe:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - name: Probe mcp-shield on two cases (no API key)
-        run: |
-          python3 bench/run.py --export /tmp/cases
-          npx -y mcp-shield --help || true
-          for c in heldout/h07-zed-config tuning/m09-unpinned-mcp heldout/h02-redirect-payments; do
-            echo "== $c"; ls /tmp/cases/$c
-            for f in /tmp/cases/$c/*.json; do
-              echo "-- $f"
-              timeout 120 npx -y mcp-shield --path "$f"; echo "exit=$?"
-            done
-          done

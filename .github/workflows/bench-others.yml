@@ -1,0 +1,34 @@
+name: hexbench other scanners
+
+# Runs third-party scanners through bench/run.py on GitHub's runners (not on a desktop with
+# endpoint protection). Only offline modes that need no API key are used.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cisco-mcp-scanner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
+      - name: Install cisco-ai-mcp-scanner
+        run: uv tool install --python 3.13 cisco-ai-mcp-scanner
+      - name: Probe output format on one case
+        run: |
+          python bench/run.py --export /tmp/cases
+          mcp-scanner --help | head -40 || true
+          mcp-scanner static --help | head -40 || true
+          f=$(ls /tmp/cases/heldout/h02-redirect-payments/*.json | head -1)
+          echo "== file $f"; head -c 600 "$f"; echo
+          mcp-scanner --analyzers yara --format raw static --tools "$f"; echo "exit=$?"
+          mcp-scanner --analyzers yara --format summary static --tools "$f"; echo "exit=$?"
+          b=$(ls /tmp/cases/heldout/b*/*.json 2>/dev/null | head -1)
+          echo "== benign $b"
+          [ -n "$b" ] && mcp-scanner --analyzers yara --format summary static --tools "$b"; echo "exit=$?"

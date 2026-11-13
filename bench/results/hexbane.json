@@ -1,0 +1,38 @@
+{
+  "seconds": 0.4,
+  "sets": {
+    "heldout": {
+      "malicious": 11,
+      "caught": 11,
+      "benign": 5,
+      "false_alarms": 0,
+      "misses": [],
+      "alarms": [],
+      "blocked": []
+    },
+    "obfuscated": {
+      "malicious": 65,
+      "caught": 65,
+      "benign": 0,
+      "false_alarms": 0,
+      "misses": [],
+      "alarms": [],
+      "blocked": []
+    },
+    "tuning": {
+      "malicious": 24,
+      "caught": 23,
+      "benign": 7,
+      "false_alarms": 1,
+      "misses": [
+        "m23-long-description"
+      ],
+      "alarms": [
+        "b04-security-docs"
+      ],
+      "blocked": []
+    }
+  },
+  "scanner": "hexbane",
+  "command": "in-process hexbane.scanner.scan_files (verdict != PASS)"
+}

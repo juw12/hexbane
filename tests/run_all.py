@@ -10,6 +10,7 @@ SUITES = [
     ("scanner, lock, call gate, CLI", [sys.executable, "tests/test_scanner.py"], ROOT),
     ("web app hermetic checks", [sys.executable, "tests/test_web.py"], ROOT),
     ("WCAG AA contrast (severity + decoded callout)", [sys.executable, "tests/test_contrast.py"], ROOT),
+    ("hexbench harness", [sys.executable, "tests/test_bench.py"], ROOT),
     ("server (chat, load and call gates)", [sys.executable, "tests.py"], ROOT / "server"),
 ]
 

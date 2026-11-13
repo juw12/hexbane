@@ -22,6 +22,10 @@ jobs:
         run: python tests/run_all.py
       - name: Evaluation numbers
         run: python tests/evaluate.py
+      - name: hexbench - no regression against bench/results/hexbane.json
+        run: python bench/run.py --check bench/results/hexbane.json
+      - name: hexbench - keyword baseline through the command adapter
+        run: python bench/run.py --name "keyword baseline" --command "python bench/baselines/keyword_grep.py {path}"
 
   browser:
     runs-on: ubuntu-latest

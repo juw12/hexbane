@@ -105,6 +105,8 @@ Configuration: `HEXBANE_API_KEY`, `HEXBANE_ADMIN_KEY`, `HEXBANE_UPSTREAM`, `HEXB
 Measured, not claimed. Full tables and every non-PASS file: [docs/EVALUATION.md](docs/EVALUATION.md). Reproduce with
 `python tests/evaluate.py`.
 
+Run any other scanner on the same 112 labelled cases with [hexbench](bench/README.md): `python bench/run.py --command "yourtool scan {path}"`. Results per set, misses listed, no single headline number.
+
 | Corpus | Result |
 |---|---|
 | Tuning set (31 samples, rules were tuned on it) | 31/31 expected verdicts |

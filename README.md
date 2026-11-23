@@ -26,7 +26,7 @@ Also in [light theme](docs/screenshots/scan-base64-light.png) and [on a phone](d
 - **Android:** [`Hexbane-android.apk`](https://github.com/juw12/hexbane/releases/download/android/Hexbane-android.apk): open the file on the phone and allow your browser to install apps once.
 - **iPhone:** open https://juw12.github.io/hexbane/ in Safari, tap Share, then **Add to Home Screen**.
 
-The Windows, Mac and Android apps are the web app in its own window ([`desktop/`](desktop/README.md), [`android/`](android/README.md)) and change with it. Each build is opened on GitHub's machines before it is published: on Windows and on a Mac the page loads, the app starts and can store data; on an Android emulator it installs, opens and stays up. They are not code-signed or notarised, and no real phone or PC has run them yet.
+The Windows, Mac and Android apps open Hexbane's web page in a window of its own ([`desktop/`](desktop/README.md), [`android/`](android/README.md)) and change with it. The command-line scanner and the GitHub Action are installed as the rest of this README says. Each build is opened on GitHub's machines before it is published: on Windows and on a Mac the page loads, the app starts and can store data; on an Android emulator it installs, opens and stays up. They are not code-signed or notarised, and no real phone or PC has run them yet.
 
 ## What it does
 

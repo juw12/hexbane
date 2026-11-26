@@ -13,11 +13,11 @@ jobs:
   cisco-mcp-scanner:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - name: Install cisco-ai-mcp-scanner
         run: |
           uv tool install --python 3.13 cisco-ai-mcp-scanner
@@ -30,7 +30,7 @@ jobs:
             --command "python bench/adapters/cisco_yara.py {path}" \
             --timeout 300 \
             --json out/cisco-mcp-scanner.json | tee out/cisco-mcp-scanner.md
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: hexbench-others
           path: out/
